@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Edit, Save, X, Clock, Calendar } from "lucide-react"
+import { Edit, Save, X, Clock, Calendar, Plus } from "lucide-react"
 
 const initialBusinessHours = [
   { day: "Monday", isOpen: false, openTime: "12:00", closeTime: "21:00" },
@@ -20,45 +21,126 @@ const initialBusinessHours = [
 
 const sampleBookedSlots = [
   {
-    id: 1,
     date: "2024-01-20",
-    time: "14:00",
-    duration: "2 hours",
-    customerName: "John Smith",
-    package: "Birthday Party",
-    lane: "Lane 3",
-    status: "Confirmed",
+    day: "Saturday",
+    bookings: [
+      {
+        id: 1,
+        startTime: "14:00",
+        endTime: "16:00",
+        customerName: "John Smith",
+        package: "Birthday Party",
+        lane: "Lane 3",
+        status: "confirmed",
+      },
+      {
+        id: 2,
+        startTime: "16:30",
+        endTime: "17:30",
+        customerName: "Sarah Johnson",
+        package: "Economical",
+        lane: "Lane 1",
+        status: "confirmed",
+      },
+      {
+        id: 3,
+        startTime: "18:00",
+        endTime: "20:00",
+        customerName: "Mike Davis",
+        package: "Corporate",
+        lane: "Lane 2",
+        status: "pending",
+      },
+    ],
   },
   {
-    id: 2,
-    date: "2024-01-20",
-    time: "16:30",
-    duration: "1 hour",
-    customerName: "Sarah Johnson",
-    package: "Economical Bowling",
-    lane: "Lane 1",
-    status: "Confirmed",
-  },
-  {
-    id: 3,
     date: "2024-01-21",
-    time: "13:00",
-    duration: "3 hours",
-    customerName: "Corporate Event - ABC Corp",
-    package: "Corporate Package",
-    lane: "Lanes 4-6",
-    status: "Pending",
+    day: "Sunday",
+    bookings: [
+      {
+        id: 4,
+        startTime: "13:00",
+        endTime: "16:00",
+        customerName: "ABC Corp",
+        package: "Corporate",
+        lane: "Lanes 4-6",
+        status: "pending",
+      },
+      {
+        id: 5,
+        startTime: "17:00",
+        endTime: "18:00",
+        customerName: "Emma Wilson",
+        package: "Economical",
+        lane: "Lane 1",
+        status: "confirmed",
+      },
+    ],
+  },
+  {
+    date: "2024-01-22",
+    day: "Monday",
+    bookings: [],
+  },
+  {
+    date: "2024-01-23",
+    day: "Tuesday",
+    bookings: [],
+  },
+  {
+    date: "2024-01-24",
+    day: "Wednesday",
+    bookings: [],
+  },
+  {
+    date: "2024-01-25",
+    day: "Thursday",
+    bookings: [
+      {
+        id: 6,
+        startTime: "15:00",
+        endTime: "17:00",
+        customerName: "Birthday Party",
+        package: "Birthday",
+        lane: "Lane 5",
+        status: "confirmed",
+      },
+    ],
+  },
+  {
+    date: "2024-01-26",
+    day: "Friday",
+    bookings: [
+      {
+        id: 7,
+        startTime: "19:00",
+        endTime: "21:00",
+        customerName: "Team Event",
+        package: "Corporate",
+        lane: "Lane 3",
+        status: "confirmed",
+      },
+      {
+        id: 8,
+        startTime: "14:00",
+        endTime: "15:00",
+        customerName: "Lisa Brown",
+        package: "Economical",
+        lane: "Lane 2",
+        status: "confirmed",
+      },
+    ],
   },
 ]
 
 export function BusinessHoursTab() {
+  const router = useRouter()
   const [businessHours, setBusinessHours] = useState(initialBusinessHours)
   const [editingHours, setEditingHours] = useState(false)
   const [bookedSlots] = useState(sampleBookedSlots)
 
   const handleSaveHours = () => {
     setEditingHours(false)
-    // Here you would save to your backend
     console.log("Saving business hours:", businessHours)
   }
 
@@ -70,19 +152,160 @@ export function BusinessHoursTab() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Confirmed":
-        return "bg-green-100 text-green-800"
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "Cancelled":
-        return "bg-red-100 text-red-800"
+      case "confirmed":
+        return "bg-green-500"
+      case "pending":
+        return "bg-yellow-500"
+      case "cancelled":
+        return "bg-red-500"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-500"
     }
+  }
+
+  const getPackageColor = (packageType: string) => {
+    switch (packageType.toLowerCase()) {
+      case "birthday party":
+      case "birthday":
+        return "bg-pink-500"
+      case "economical":
+        return "bg-blue-500"
+      case "corporate":
+        return "bg-purple-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  const timeToPosition = (time: string, startHour = 11, endHour = 22) => {
+    const [hours, minutes] = time.split(":").map(Number)
+    const totalMinutes = hours * 60 + minutes
+    const startMinutes = startHour * 60
+    const endMinutes = endHour * 60
+    const totalRange = endMinutes - startMinutes
+    return ((totalMinutes - startMinutes) / totalRange) * 100
+  }
+
+  const getBookingWidth = (startTime: string, endTime: string, startHour = 11, endHour = 22) => {
+    const startPos = timeToPosition(startTime, startHour, endHour)
+    const endPos = timeToPosition(endTime, startHour, endHour)
+    return endPos - startPos
+  }
+
+  const handleDayClick = (date: string) => {
+    router.push(`/admin/bookings?date=${date}`)
+  }
+
+  const generateTimeMarkers = (startHour = 11, endHour = 22) => {
+    const markers = []
+    for (let hour = startHour; hour <= endHour; hour++) {
+      const position = ((hour - startHour) / (endHour - startHour)) * 100
+      markers.push(
+        <div key={hour} className="absolute flex flex-col items-center" style={{ left: `${position}%` }}>
+          <div className="w-px h-4 bg-gray-300"></div>
+          <span className="text-xs text-gray-500 mt-1">{hour}:00</span>
+        </div>,
+      )
+    }
+    return markers
   }
 
   return (
     <div className="space-y-6">
+      {/* Booked Slots Timeline */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center space-x-2">
+                <Calendar className="w-5 h-5" />
+                <span>Weekly Booking Overview</span>
+              </CardTitle>
+              <CardDescription>Visual timeline of bookings for the week</CardDescription>
+            </div>
+            <Button onClick={() => router.push("/admin/bookings/new")} className="flex items-center space-x-2">
+              <Plus className="w-4 h-4" />
+              <span>Add Booking</span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {bookedSlots.map((daySlot) => (
+              <div key={daySlot.date} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <h4 className="font-semibold text-gray-900 w-20">{daySlot.day}</h4>
+                    <span className="text-sm text-gray-500">{daySlot.date}</span>
+                    <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                      {daySlot.bookings.length} booking{daySlot.bookings.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => handleDayClick(daySlot.date)} className="text-xs">
+                    View Details
+                  </Button>
+                </div>
+
+                <div
+                  className="relative h-12 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors border-2 border-transparent hover:border-primary/20"
+                  onClick={() => handleDayClick(daySlot.date)}
+                >
+                  {/* Time markers */}
+                  {generateTimeMarkers(11, 22)}
+
+                  {/* Booking blocks */}
+                  {daySlot.bookings.map((booking) => {
+                    const startPos = timeToPosition(booking.startTime, 11, 22)
+                    const width = getBookingWidth(booking.startTime, booking.endTime, 11, 22)
+
+                    return (
+                      <div
+                        key={booking.id}
+                        className={`absolute top-1 h-10 rounded ${getPackageColor(booking.package)} opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium shadow-sm`}
+                        style={{
+                          left: `${startPos}%`,
+                          width: `${width}%`,
+                          minWidth: "60px",
+                        }}
+                        title={`${booking.customerName} - ${booking.package} (${booking.startTime}-${booking.endTime})`}
+                      >
+                        <span className="truncate px-1">{booking.customerName.split(" ")[0]}</span>
+                      </div>
+                    )
+                  })}
+
+                  {/* Empty state */}
+                  {daySlot.bookings.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                      No bookings - Click to add
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <h5 className="text-sm font-medium text-gray-700 mb-3">Package Types:</h5>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-pink-500 rounded"></div>
+                <span className="text-sm text-gray-600">Birthday Party</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                <span className="text-sm text-gray-600">Economical</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-purple-500 rounded"></div>
+                <span className="text-sm text-gray-600">Corporate</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Business Hours Card */}
       <Card>
         <CardHeader>
@@ -171,50 +394,6 @@ export function BusinessHoursTab() {
                     )}
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Booked Slots Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5" />
-            <span>Booked Slots</span>
-          </CardTitle>
-          <CardDescription>Current bookings and reservations</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {bookedSlots.map((slot) => (
-              <div key={slot.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-4">
-                      <h4 className="font-semibold text-gray-900">{slot.customerName}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(slot.status)}`}>
-                        {slot.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-6 text-sm text-gray-600">
-                      <span>📅 {slot.date}</span>
-                      <span>🕐 {slot.time}</span>
-                      <span>⏱️ {slot.duration}</span>
-                      <span>🎳 {slot.lane}</span>
-                    </div>
-                    <div className="text-sm text-primary font-medium">{slot.package}</div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
