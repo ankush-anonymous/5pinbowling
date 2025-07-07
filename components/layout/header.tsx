@@ -37,6 +37,9 @@ export function Header() {
             <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
               Contact Us
             </Link>
+            <Link href="/signin" className="text-gray-700 hover:text-primary transition-colors">
+              Sign In
+            </Link>
           </nav>
 
           {/* Contact Info & CTA */}
@@ -72,6 +75,9 @@ export function Header() {
               </Link>
               <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
                 Contact Us
+              </Link>
+              <Link href="/signin" className="text-gray-700 hover:text-primary transition-colors">
+                Sign In
               </Link>
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
