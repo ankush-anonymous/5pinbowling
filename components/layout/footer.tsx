@@ -1,95 +1,44 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin } from "lucide-react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { businessHoursApi, type BusinessHour, handleApiError } from "@/lib/api"
 
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger)
-}
-
-const businessHours = [
-  { day: "Monday", hours: "CLOSED", startHour: 0, endHour: 0, closed: true },
-  { day: "Tuesday", hours: "CLOSED", startHour: 0, endHour: 0, closed: true },
-  { day: "Wednesday", hours: "CLOSED", startHour: 0, endHour: 0, closed: true },
-  { day: "Thursday", hours: "12:00 NOON - 9:00 PM", startHour: 12, endHour: 21, closed: false },
-  { day: "Friday", hours: "12:00 NOON - 9:00 PM", startHour: 12, endHour: 21, closed: false },
-  { day: "Saturday", hours: "11:00 AM - 10:00 PM", startHour: 11, endHour: 22, closed: false },
-  { day: "Sunday", hours: "11:00 AM - 7:00 PM", startHour: 11, endHour: 19, closed: false },
-]
-
-function HoursBar({ day, hours, startHour, endHour, closed }: any) {
-  const barRef = useRef<HTMLDivElement>(null)
-
-  // Calculate percentage based on 11AM (11) to 11PM (23) scale
-  const scaleStart = 11
-  const scaleEnd = 23
-  const totalHours = scaleEnd - scaleStart
-
-  const startPercent = closed ? 0 : ((startHour - scaleStart) / totalHours) * 100
-  const widthPercent = closed ? 0 : ((endHour - startHour) / totalHours) * 100
-
-  useEffect(() => {
-    if (barRef.current && !closed) {
-      gsap.fromTo(
-        barRef.current,
-        { scaleX: 0 },
-        {
-          scaleX: 1,
-          duration: 1.2,
-          ease: "power2.out",
-          delay: Math.random() * 0.5,
-          scrollTrigger: {
-            trigger: barRef.current,
-            start: "top 90%",
-            toggleActions: "play none none reverse",
-          },
-        },
-      )
-    }
-  }, [closed])
-
-  return (
-    <div className="flex items-center justify-between py-3 group hover:bg-white/5 rounded-lg px-2 lg:px-4 transition-all duration-300">
-      <span className="text-white font-medium w-16 lg:w-20 text-left text-xs lg:text-base">{day}</span>
-
-      <div className="flex-1 mx-2 lg:mx-6 relative">
-        {/* Background track */}
-        <div className="h-4 lg:h-8 bg-gray-700/50 rounded-full relative overflow-hidden">
-          {!closed && (
-            <div
-              ref={barRef}
-              className="absolute h-full bg-gradient-to-r from-primary to-burgundy-600 rounded-full border border-primary/30 lg:border-2 shadow-lg origin-left"
-              style={{
-                left: `${startPercent}%`,
-                width: `${widthPercent}%`,
-              }}
-            />
-          )}
-          {closed && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-gray-400 text-xs font-medium">CLOSED</span>
-            </div>
-          )}
-        </div>
-
-        {/* Time markers */}
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>11AM</span>
-          <span>11PM</span>
-        </div>
-      </div>
-
-      <span className="text-gray-300 text-xs lg:text-sm w-24 lg:w-40 text-right">{hours}</span>
-    </div>
-  )
-}
-
-export function Footer() {
+const Footer = () => {
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const footerRef = useRef<HTMLElement>(null)
   const hoursRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      gsap.registerPlugin(ScrollTrigger)
+    }
+  }, [])
+
+  useEffect(() => {
+    const fetchBusinessHours = async () => {
+      try {
+        setIsLoading(true)
+        const hours = await businessHoursApi.getAllBusinessHours()
+        // Sort by day_no to ensure correct order
+        const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
+        setBusinessHours(sortedHours)
+      } catch (err) {
+        const errorMessage = handleApiError(err)
+        setError(errorMessage)
+        console.error("Failed to fetch business hours:", errorMessage)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchBusinessHours()
+  }, [])
 
   useEffect(() => {
     if (footerRef.current && hoursRef.current) {
@@ -110,6 +59,95 @@ export function Footer() {
       )
     }
   }, [])
+
+  function HoursBar({ day_name, starttime, endtime, offday }: BusinessHour) {
+    const barRef = useRef<HTMLDivElement>(null)
+
+    // Convert time format from "HH:MM:SS" to hour number
+    const timeToHour = (timeString: string) => {
+      const [hours] = timeString.split(":").map(Number)
+      return hours
+    }
+
+    const startHour = offday ? 0 : timeToHour(starttime)
+    const endHour = offday ? 0 : timeToHour(endtime)
+
+    // Calculate percentage based on 11AM (11) to 11PM (23) scale
+    const scaleStart = 11
+    const scaleEnd = 23
+    const totalHours = scaleEnd - scaleStart
+
+    const startPercent = offday ? 0 : ((startHour - scaleStart) / totalHours) * 100
+    const widthPercent = offday ? 0 : ((endHour - startHour) / totalHours) * 100
+
+    // Format display time
+    const formatTime = (timeString: string) => {
+      const [hours, minutes] = timeString.split(":")
+      const hour = Number.parseInt(hours)
+      const ampm = hour >= 12 ? "PM" : "AM"
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+      return `${displayHour}:${minutes} ${ampm}`
+    }
+
+    const displayHours = offday ? "CLOSED" : `${formatTime(starttime)} - ${formatTime(endtime)}`
+
+    useEffect(() => {
+      if (barRef.current && !offday) {
+        gsap.fromTo(
+          barRef.current,
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            duration: 1.2,
+            ease: "power2.out",
+            delay: Math.random() * 0.5,
+            scrollTrigger: {
+              trigger: barRef.current,
+              start: "top 90%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        )
+      }
+    }, [offday])
+
+    return (
+      <div className="flex items-center justify-between py-3 group hover:bg-white/5 rounded-lg px-2 lg:px-4 transition-all duration-300">
+        <span className="text-white font-medium w-16 lg:w-20 text-left text-xs lg:text-base">
+          {day_name.slice(0, 3)}
+        </span>
+
+        <div className="flex-1 mx-2 lg:mx-6 relative">
+          {/* Background track */}
+          <div className="h-4 lg:h-8 bg-gray-700/50 rounded-full relative overflow-hidden">
+            {!offday && (
+              <div
+                ref={barRef}
+                className="absolute h-full bg-gradient-to-r from-primary to-burgundy-600 rounded-full border border-primary/30 lg:border-2 shadow-lg origin-left"
+                style={{
+                  left: `${startPercent}%`,
+                  width: `${widthPercent}%`,
+                }}
+              />
+            )}
+            {offday && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-gray-400 text-xs font-medium">CLOSED</span>
+              </div>
+            )}
+          </div>
+
+          {/* Time markers */}
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>11AM</span>
+            <span>11PM</span>
+          </div>
+        </div>
+
+        <span className="text-gray-300 text-xs lg:text-sm w-24 lg:w-40 text-right">{displayHours}</span>
+      </div>
+    )
+  }
 
   return (
     <footer
@@ -132,11 +170,28 @@ export function Footer() {
           </div>
 
           <div className="max-w-4xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-gray-700/50">
-            <div className="space-y-2">
-              {businessHours.map((schedule, index) => (
-                <HoursBar key={index} {...schedule} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-gray-300">Loading business hours...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-400 mb-4">Error loading business hours: {error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-primary hover:text-burgundy-200 underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {businessHours.map((schedule) => (
+                  <HoursBar key={schedule.id} {...schedule} />
+                ))}
+              </div>
+            )}
 
             {/* Special Arrangements Note */}
             <div className="mt-8 pt-6 border-t border-gray-600/50">
@@ -271,3 +326,5 @@ export function Footer() {
     </footer>
   )
 }
+
+export { Footer }

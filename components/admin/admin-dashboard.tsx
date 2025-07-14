@@ -1,56 +1,41 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, Settings, FileText, Trophy } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BusinessHoursTab } from "./business-hours-tab"
+import { PackagesTab } from "./packages-tab"
 import { UpdatesTab } from "./updates-tab"
 import { LeaguesTab } from "./leagues-tab"
+import { Calendar, Package, Clock, Megaphone, Trophy } from "lucide-react"
 
 export function AdminDashboard() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("dashboard")
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAdminAuthenticated")
-    router.push("/signin")
-  }
+  const [activeTab, setActiveTab] = useState("bookings")
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">🎳</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">5pinbowlin Admin</h1>
-                <p className="text-sm text-gray-500">Dashboard</p>
-              </div>
-            </div>
-            <Button onClick={handleLogout} variant="outline" className="flex items-center space-x-2 bg-transparent">
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </Button>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage your bowling center operations</p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3">
-            <TabsTrigger value="dashboard" className="flex items-center space-x-2">
-              <Settings className="w-4 h-4" />
-              <span>Dashboard</span>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="bookings" className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4" />
+              <span>Bookings</span>
+            </TabsTrigger>
+            <TabsTrigger value="packages" className="flex items-center space-x-2">
+              <Package className="w-4 h-4" />
+              <span>Packages</span>
+            </TabsTrigger>
+            <TabsTrigger value="business-hours" className="flex items-center space-x-2">
+              <Clock className="w-4 h-4" />
+              <span>Business Hours</span>
             </TabsTrigger>
             <TabsTrigger value="updates" className="flex items-center space-x-2">
-              <FileText className="w-4 h-4" />
+              <Megaphone className="w-4 h-4" />
               <span>Updates</span>
             </TabsTrigger>
             <TabsTrigger value="leagues" className="flex items-center space-x-2">
@@ -59,19 +44,47 @@ export function AdminDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
+          <TabsContent value="bookings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>Booking Management</span>
+                </CardTitle>
+                <CardDescription>View and manage all bowling reservations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Access the full booking management system to view, edit, and create new reservations.
+                </p>
+                <a
+                  href="/admin/bookings"
+                  className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Open Booking Management
+                </a>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="packages">
+            <PackagesTab />
+          </TabsContent>
+
+          <TabsContent value="business-hours">
             <BusinessHoursTab />
           </TabsContent>
 
-          <TabsContent value="updates" className="space-y-6">
+          <TabsContent value="updates">
             <UpdatesTab />
           </TabsContent>
 
-          <TabsContent value="leagues" className="space-y-6">
+          <TabsContent value="leagues">
             <LeaguesTab />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,25 +10,49 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Save, Calendar, User, Package, Clock } from "lucide-react"
+import { ArrowLeft, Save, Calendar, User, Clock, Pizza, Footprints } from "lucide-react"
+import {
+  slotBookingApi,
+  packagesApi,
+  type CreateSlotBookingRequest,
+  type Package as PackageType,
+  handleApiError,
+} from "@/lib/api"
 
 export function NewBookingForm() {
   const router = useRouter()
+  const [packages, setPackages] = useState<PackageType[]>([])
   const [formData, setFormData] = useState({
     customerName: "",
-    customerEmail: "",
-    customerPhone: "",
+    email: "",
+    phone: "",
     date: "",
     startTime: "",
     endTime: "",
-    package: "",
-    lane: "",
-    numberOfPlayers: "",
-    specialRequests: "",
-    status: "pending",
-    paymentStatus: "pending",
+    noOfPlayers: "",
+    package_id: "",
+    lane_no: "",
+    book_status: "pending",
+    pay_status: "pending",
+    note: "",
+    pizza_type: "",
+    pizza_quantity: "",
+    shoe_size: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchPackages()
+  }, [])
+
+  const fetchPackages = async () => {
+    try {
+      const response = await packagesApi.getAllPackages()
+      setPackages(response.data)
+    } catch (error) {
+      console.error("Failed to fetch packages:", handleApiError(error))
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -38,22 +62,35 @@ export function NewBookingForm() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Creating new booking:", formData)
-      setIsSubmitting(false)
+    try {
+      const bookingData: CreateSlotBookingRequest = {
+        customerName: formData.customerName,
+        email: formData.email,
+        phone: formData.phone,
+        date: formData.date,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        noOfPlayers: Number(formData.noOfPlayers),
+        package_id: formData.package_id,
+        lane_no: Number(formData.lane_no),
+        book_status: formData.book_status,
+        pay_status: formData.pay_status,
+        note: formData.note,
+        pizza_type: formData.pizza_type,
+        pizza_quantity: formData.pizza_quantity,
+        shoe_size: formData.shoe_size,
+      }
+
+      await slotBookingApi.createBooking(bookingData)
       alert("Booking created successfully!")
       router.push("/admin")
-    }, 1000)
+    } catch (error) {
+      console.error("Failed to create booking:", handleApiError(error))
+      alert("Failed to create booking")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-
-  const packages = [
-    { value: "economical", label: "Economical Bowling - $45/hour", price: 45 },
-    { value: "birthday", label: "Birthday Party - $120", price: 120 },
-    { value: "corporate", label: "Corporate Package - Custom", price: 0 },
-  ]
-
-  const lanes = ["Lane 1", "Lane 2", "Lane 3", "Lane 4", "Lane 5", "Lane 6"]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -110,24 +147,24 @@ export function NewBookingForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="customerEmail">Email Address *</Label>
+                    <Label htmlFor="email">Email Address *</Label>
                     <Input
-                      id="customerEmail"
+                      id="email"
                       type="email"
-                      value={formData.customerEmail}
-                      onChange={(e) => handleInputChange("customerEmail", e.target.value)}
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="email@example.com"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="customerPhone">Phone Number *</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <Input
-                      id="customerPhone"
+                      id="phone"
                       type="tel"
-                      value={formData.customerPhone}
-                      onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                      placeholder="(555) 123-4567"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      placeholder="9876543210"
                       required
                     />
                   </div>
@@ -172,14 +209,14 @@ export function NewBookingForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="numberOfPlayers">Number of Players *</Label>
+                    <Label htmlFor="noOfPlayers">Number of Players *</Label>
                     <Input
-                      id="numberOfPlayers"
+                      id="noOfPlayers"
                       type="number"
                       min="1"
                       max="20"
-                      value={formData.numberOfPlayers}
-                      onChange={(e) => handleInputChange("numberOfPlayers", e.target.value)}
+                      value={formData.noOfPlayers}
+                      onChange={(e) => handleInputChange("noOfPlayers", e.target.value)}
                       placeholder="1-20"
                       required
                     />
@@ -190,39 +227,77 @@ export function NewBookingForm() {
               {/* Package & Lane */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Package className="w-5 h-5 text-primary" />
+                  <Footprints className="w-5 h-5 text-primary" />
                   <h3 className="text-lg font-semibold">Package & Lane</h3>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="package">Package *</Label>
-                    <Select value={formData.package} onValueChange={(value) => handleInputChange("package", value)}>
+                    <Label htmlFor="package_id">Package *</Label>
+                    <Select
+                      value={formData.package_id}
+                      onValueChange={(value) => handleInputChange("package_id", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a package" />
                       </SelectTrigger>
                       <SelectContent>
                         {packages.map((pkg) => (
-                          <SelectItem key={pkg.value} value={pkg.value}>
-                            {pkg.label}
+                          <SelectItem key={pkg.id} value={pkg.id}>
+                            {pkg.title} - ${pkg.cost}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lane">Lane *</Label>
-                    <Select value={formData.lane} onValueChange={(value) => handleInputChange("lane", value)}>
+                    <Label htmlFor="lane_no">Lane *</Label>
+                    <Select value={formData.lane_no} onValueChange={(value) => handleInputChange("lane_no", value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a lane" />
                       </SelectTrigger>
                       <SelectContent>
-                        {lanes.map((lane) => (
-                          <SelectItem key={lane} value={lane}>
-                            {lane}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="1">Lane 1</SelectItem>
+                        <SelectItem value="2">Lane 2</SelectItem>
+                        <SelectItem value="3">Lane 3</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pizza & Extras */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Pizza className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Pizza & Extras</h3>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pizza_type">Pizza Types</Label>
+                    <Input
+                      id="pizza_type"
+                      value={formData.pizza_type}
+                      onChange={(e) => handleInputChange("pizza_type", e.target.value)}
+                      placeholder="Pepperoni,Margherita (comma separated)"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pizza_quantity">Pizza Quantities</Label>
+                    <Input
+                      id="pizza_quantity"
+                      value={formData.pizza_quantity}
+                      onChange={(e) => handleInputChange("pizza_quantity", e.target.value)}
+                      placeholder="2,1 (comma separated)"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shoe_size">Shoe Sizes</Label>
+                    <Input
+                      id="shoe_size"
+                      value={formData.shoe_size}
+                      onChange={(e) => handleInputChange("shoe_size", e.target.value)}
+                      placeholder="42,43,40,41,42 (comma separated)"
+                    />
                   </div>
                 </div>
               </div>
@@ -232,8 +307,11 @@ export function NewBookingForm() {
                 <h3 className="text-lg font-semibold">Status</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="status">Booking Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                    <Label htmlFor="book_status">Booking Status</Label>
+                    <Select
+                      value={formData.book_status}
+                      onValueChange={(value) => handleInputChange("book_status", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -245,10 +323,10 @@ export function NewBookingForm() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="paymentStatus">Payment Status</Label>
+                    <Label htmlFor="pay_status">Payment Status</Label>
                     <Select
-                      value={formData.paymentStatus}
-                      onValueChange={(value) => handleInputChange("paymentStatus", value)}
+                      value={formData.pay_status}
+                      onValueChange={(value) => handleInputChange("pay_status", value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -265,11 +343,11 @@ export function NewBookingForm() {
 
               {/* Special Requests */}
               <div className="space-y-2">
-                <Label htmlFor="specialRequests">Special Requests</Label>
+                <Label htmlFor="note">Notes</Label>
                 <Textarea
-                  id="specialRequests"
-                  value={formData.specialRequests}
-                  onChange={(e) => handleInputChange("specialRequests", e.target.value)}
+                  id="note"
+                  value={formData.note}
+                  onChange={(e) => handleInputChange("note", e.target.value)}
                   placeholder="Any special requirements or notes..."
                   rows={4}
                 />

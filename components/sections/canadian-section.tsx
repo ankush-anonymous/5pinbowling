@@ -70,13 +70,13 @@ export function CanadianSection() {
           <div className="mt-12">
             <div className="bg-gray-50 rounded-lg p-8 border-2 border-dashed border-gray-300">
               <div className="text-center space-y-4">
-                <p className="text-gray-500 font-medium">
+                <div className="text-gray-500 font-medium">
                   <DotLottieReact
                     src="https://lottie.host/5980b509-7b16-4b82-b412-f6f992558ae5/2bzjN3sCSf.lottie"
                     loop
                     autoplay
                   />
-                </p>
+                </div>
               </div>
             </div>
           </div>
