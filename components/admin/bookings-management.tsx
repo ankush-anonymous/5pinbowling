@@ -544,30 +544,112 @@ export function BookingsManagement({ selectedDate }: BookingsManagementProps) {
                 <Pizza className="w-4 h-4" />
                 <span>Pizza & Extras</span>
               </h4>
-              <div className="grid grid-cols-3 gap-4">
+
+              {/* Pizza Quantity */}
+              <div className="space-y-2">
+                <Label>Number of Pizzas</Label>
+                <Select
+                  value={editForm.pizza_quantity || "0"}
+                  onValueChange={(value) => {
+                    handleInputChange("pizza_quantity", value)
+                    // Update pizza types array
+                    const types = editForm.pizza_type ? editForm.pizza_type.split(",") : []
+                    const newTypes = Array(Number.parseInt(value) || 0)
+                      .fill("")
+                      .map((_, i) => types[i] || "")
+                    handleInputChange("pizza_type", newTypes.join(","))
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">0</SelectItem>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="4">4</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pizza Types */}
+              {Number.parseInt(editForm.pizza_quantity || "0") > 0 && (
                 <div className="space-y-2">
-                  <Label>Pizza Types (comma separated)</Label>
-                  <Input
-                    value={editForm.pizza_type || ""}
-                    onChange={(e) => handleInputChange("pizza_type", e.target.value)}
-                    placeholder="Pepperoni,Margherita"
-                  />
+                  <Label>Pizza Types</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {Array.from({ length: Number.parseInt(editForm.pizza_quantity || "0") }, (_, index) => {
+                      const pizzaTypes = editForm.pizza_type ? editForm.pizza_type.split(",") : []
+                      const currentType = pizzaTypes[index] || ""
+
+                      return (
+                        <div key={index} className="space-y-1">
+                          <Label className="text-sm">Pizza {index + 1}</Label>
+                          <Select
+                            value={currentType}
+                            onValueChange={(value) => {
+                              const types = editForm.pizza_type ? editForm.pizza_type.split(",") : []
+                              types[index] = value
+                              handleInputChange("pizza_type", types.join(","))
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select pizza type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Margherita">Margherita</SelectItem>
+                              <SelectItem value="Pepperoni">Pepperoni</SelectItem>
+                              <SelectItem value="Hawaiian">Hawaiian</SelectItem>
+                              <SelectItem value="Meat Lovers">Meat Lovers</SelectItem>
+                              <SelectItem value="Vegetarian">Vegetarian</SelectItem>
+                              <SelectItem value="BBQ Chicken">BBQ Chicken</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Pizza Quantities (comma separated)</Label>
-                  <Input
-                    value={editForm.pizza_quantity || ""}
-                    onChange={(e) => handleInputChange("pizza_quantity", e.target.value)}
-                    placeholder="2,1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Shoe Sizes (comma separated)</Label>
-                  <Input
-                    value={editForm.shoe_size || ""}
-                    onChange={(e) => handleInputChange("shoe_size", e.target.value)}
-                    placeholder="42,43,40,41,42"
-                  />
+              )}
+
+              {/* Shoe Sizes */}
+              <div className="space-y-2">
+                <Label>Shoe Sizes (for each player)</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {Array.from({ length: Number.parseInt(editForm.noOfPlayers || "0") }, (_, index) => {
+                    const shoeSizes = editForm.shoe_size ? editForm.shoe_size.split(",") : []
+                    const currentSize = shoeSizes[index] || ""
+
+                    return (
+                      <div key={index} className="space-y-1">
+                        <Label className="text-sm">Player {index + 1}</Label>
+                        <Select
+                          value={currentSize}
+                          onValueChange={(value) => {
+                            const sizes = editForm.shoe_size ? editForm.shoe_size.split(",") : []
+                            sizes[index] = value
+                            handleInputChange("shoe_size", sizes.join(","))
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Shoe size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="6">6</SelectItem>
+                            <SelectItem value="7">7</SelectItem>
+                            <SelectItem value="8">8</SelectItem>
+                            <SelectItem value="9">9</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="11">11</SelectItem>
+                            <SelectItem value="12">12</SelectItem>
+                            <SelectItem value="13">13</SelectItem>
+                            <SelectItem value="14">14</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>

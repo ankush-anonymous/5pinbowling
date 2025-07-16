@@ -22,6 +22,11 @@ import {
 export function NewBookingForm() {
   const router = useRouter()
   const [packages, setPackages] = useState<PackageType[]>([])
+  // Add these state variables at the top
+  const [pizzaTypes, setPizzaTypes] = useState<string[]>([])
+  const [shoeSizes, setShoeSizes] = useState<string[]>([])
+
+  // Add this to the formData
   const [formData, setFormData] = useState({
     customerName: "",
     email: "",
@@ -35,9 +40,7 @@ export function NewBookingForm() {
     book_status: "pending",
     pay_status: "pending",
     note: "",
-    pizza_type: "",
-    pizza_quantity: "",
-    shoe_size: "",
+    pizzaQuantity: "0",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -54,43 +57,53 @@ export function NewBookingForm() {
     }
   }
 
+  // Update the handleInputChange for noOfPlayers
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    try {
-      const bookingData: CreateSlotBookingRequest = {
-        customerName: formData.customerName,
-        email: formData.email,
-        phone: formData.phone,
-        date: formData.date,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        noOfPlayers: Number(formData.noOfPlayers),
-        package_id: formData.package_id,
-        lane_no: Number(formData.lane_no),
-        book_status: formData.book_status,
-        pay_status: formData.pay_status,
-        note: formData.note,
-        pizza_type: formData.pizza_type,
-        pizza_quantity: formData.pizza_quantity,
-        shoe_size: formData.shoe_size,
-      }
-
-      await slotBookingApi.createBooking(bookingData)
-      alert("Booking created successfully!")
-      router.push("/admin")
-    } catch (error) {
-      console.error("Failed to create booking:", handleApiError(error))
-      alert("Failed to create booking")
-    } finally {
-      setIsSubmitting(false)
+    // Update shoe sizes array when number of players changes
+    if (field === "noOfPlayers") {
+      const numPlayers = Number.parseInt(value) || 0
+      const newShoeSizes = Array(numPlayers).fill("")
+      setShoeSizes(newShoeSizes)
     }
   }
+
+  // Update the handleSubmit to include proper data formatting
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsSubmitting(true)
+
+  try {
+    const bookingData: CreateSlotBookingRequest = {
+      customerName: formData.customerName,
+      email: formData.email,
+      phone: formData.phone,
+      date: formData.date, // keep as 'YYYY-MM-DD' string
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      noOfPlayers: Number(formData.noOfPlayers),
+      package_id: formData.package_id,
+      lane_no: Number(formData.lane_no),
+      book_status: formData.book_status,
+      pay_status: formData.pay_status,
+      note: formData.note,
+      pizza_type: pizzaTypes.join(","),
+      pizza_quantity: formData.pizzaQuantity,
+      shoe_size: shoeSizes.join(","),
+    }
+
+    await slotBookingApi.createBooking(bookingData)
+    alert("Booking created successfully!")
+    router.push("/admin")
+  } catch (error) {
+    console.error("Failed to create booking:", handleApiError(error))
+    alert("Failed to create booking")
+  } finally {
+    setIsSubmitting(false)
+  }
+}
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -271,33 +284,99 @@ export function NewBookingForm() {
                   <Pizza className="w-5 h-5 text-primary" />
                   <h3 className="text-lg font-semibold">Pizza & Extras</h3>
                 </div>
-                <div className="grid md:grid-cols-3 gap-4">
+
+                {/* Pizza Quantity */}
+                <div className="space-y-2">
+                  <Label htmlFor="pizzaQuantity">Number of Pizzas</Label>
+                  <Select
+                    value={formData.pizzaQuantity}
+                    onValueChange={(value) => {
+                      handleInputChange("pizzaQuantity", value)
+                      // Reset pizza types when quantity changes
+                      const newPizzaTypes = Array(Number.parseInt(value) || 0).fill("")
+                      setPizzaTypes(newPizzaTypes)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select number of pizzas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4">4</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Pizza Types */}
+                {Number.parseInt(formData.pizzaQuantity) > 0 && (
                   <div className="space-y-2">
-                    <Label htmlFor="pizza_type">Pizza Types</Label>
-                    <Input
-                      id="pizza_type"
-                      value={formData.pizza_type}
-                      onChange={(e) => handleInputChange("pizza_type", e.target.value)}
-                      placeholder="Pepperoni,Margherita (comma separated)"
-                    />
+                    <Label>Pizza Types</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {pizzaTypes.map((type, index) => (
+                        <div key={index} className="space-y-1">
+                          <Label className="text-sm">Pizza {index + 1}</Label>
+                          <Select
+                            value={type}
+                            onValueChange={(value) => {
+                              const newTypes = [...pizzaTypes]
+                              newTypes[index] = value
+                              setPizzaTypes(newTypes)
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select pizza type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Margherita">Margherita</SelectItem>
+                              <SelectItem value="Pepperoni">Pepperoni</SelectItem>
+                              <SelectItem value="Hawaiian">Hawaiian</SelectItem>
+                              <SelectItem value="Meat Lovers">Meat Lovers</SelectItem>
+                              <SelectItem value="Vegetarian">Vegetarian</SelectItem>
+                              <SelectItem value="BBQ Chicken">BBQ Chicken</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pizza_quantity">Pizza Quantities</Label>
-                    <Input
-                      id="pizza_quantity"
-                      value={formData.pizza_quantity}
-                      onChange={(e) => handleInputChange("pizza_quantity", e.target.value)}
-                      placeholder="2,1 (comma separated)"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="shoe_size">Shoe Sizes</Label>
-                    <Input
-                      id="shoe_size"
-                      value={formData.shoe_size}
-                      onChange={(e) => handleInputChange("shoe_size", e.target.value)}
-                      placeholder="42,43,40,41,42 (comma separated)"
-                    />
+                )}
+
+                {/* Shoe Sizes */}
+                <div className="space-y-2">
+                  <Label>Shoe Sizes (for each player)</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {shoeSizes.map((size, index) => (
+                      <div key={index} className="space-y-1">
+                        <Label className="text-sm">Player {index + 1}</Label>
+                        <Select
+                          value={size}
+                          onValueChange={(value) => {
+                            const newSizes = [...shoeSizes]
+                            newSizes[index] = value
+                            setShoeSizes(newSizes)
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Shoe size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="6">6</SelectItem>
+                            <SelectItem value="7">7</SelectItem>
+                            <SelectItem value="8">8</SelectItem>
+                            <SelectItem value="9">9</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="11">11</SelectItem>
+                            <SelectItem value="12">12</SelectItem>
+                            <SelectItem value="13">13</SelectItem>
+                            <SelectItem value="14">14</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

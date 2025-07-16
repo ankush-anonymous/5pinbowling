@@ -190,6 +190,17 @@ export const packagesApi = {
   },
 }
 
+export interface BookingSlot {
+  id: string
+  startTime: string
+  endTime: string
+  customerName: string
+  package: string
+  status: string
+  lane: number // required by your rendering logic
+}
+
+
 // Slot Booking API Types
 export interface SlotBooking {
   id: string
