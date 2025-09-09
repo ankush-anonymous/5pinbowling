@@ -255,8 +255,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </SelectTrigger>
                       <SelectContent>
                         {packages.map((pkg) => (
-                          <SelectItem key={pkg.id} value={pkg.id}>
-                            {pkg.title} - ${pkg.cost}
+                          <SelectItem key={pkg._id} value={pkg._id}>
+                            {pkg.Title} - ${pkg.Cost.$numberDecimal}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -317,7 +317,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <Label>Pizza Types</Label>
                     <div className="grid grid-cols-2 gap-4">
                       {pizzaTypes.map((type, index) => (
-                        <div key={index} className="space-y-1">
+                        <div key={`pizza-${index}`} className="space-y-1">
                           <Label className="text-sm">Pizza {index + 1}</Label>
                           <Select
                             value={type}
@@ -350,7 +350,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <Label>Shoe Sizes (for each player)</Label>
                   <div className="grid grid-cols-3 gap-4">
                     {shoeSizes.map((size, index) => (
-                      <div key={index} className="space-y-1">
+                      <div key={`shoe-${index}`} className="space-y-1">
                         <Label className="text-sm">Player {index + 1}</Label>
                         <Select
                           value={size}

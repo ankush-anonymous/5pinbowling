@@ -13,7 +13,7 @@ import {
   type BusinessHour,
   type UpdateBusinessHourRequest,
   handleApiError,
-  type Booking,
+  type SlotBooking,
 } from "@/lib/api"
 import dayjs from "dayjs"
 import "dayjs/locale/en"
@@ -35,31 +35,31 @@ const sampleBookedSlots = [
     day: "Saturday",
     bookings: [
       {
-        id: 1,
-        startTime: "14:00",
-        endTime: "16:00",
-        customerName: "John Smith",
-        package: "Birthday Party",
-        lane: "Lane 3",
-        status: "confirmed",
+        id: "1",
+        starttime: "14:00",
+        endtime: "16:00",
+        customername: "John Smith",
+        package_name: "Birthday Party",
+        lane_no: 3,
+        book_status: "confirmed",
       },
       {
-        id: 2,
-        startTime: "16:30",
-        endTime: "17:30",
-        customerName: "Sarah Johnson",
-        package: "Economical",
-        lane: "Lane 1",
-        status: "confirmed",
+        id: "2",
+        starttime: "16:30",
+        endtime: "17:30",
+        customername: "Sarah Johnson",
+        package_name: "Economical",
+        lane_no: 1,
+        book_status: "confirmed",
       },
       {
-        id: 3,
-        startTime: "18:00",
-        endTime: "20:00",
-        customerName: "Mike Davis",
-        package: "Corporate",
-        lane: "Lane 2",
-        status: "pending",
+        id: "3",
+        starttime: "18:00",
+        endtime: "20:00",
+        customername: "Mike Davis",
+        package_name: "Corporate",
+        lane_no: 2,
+        book_status: "pending",
       },
     ],
   },
@@ -68,22 +68,22 @@ const sampleBookedSlots = [
     day: "Sunday",
     bookings: [
       {
-        id: 4,
-        startTime: "13:00",
-        endTime: "16:00",
-        customerName: "ABC Corp",
-        package: "Corporate",
-        lane: "Lanes 4-6",
-        status: "pending",
+        id: "4",
+        starttime: "13:00",
+        endtime: "16:00",
+        customername: "ABC Corp",
+        package_name: "Corporate",
+        lane_no: 4,
+        book_status: "pending",
       },
       {
-        id: 5,
-        startTime: "17:00",
-        endTime: "18:00",
-        customerName: "Emma Wilson",
-        package: "Economical",
-        lane: "Lane 1",
-        status: "confirmed",
+        id: "5",
+        starttime: "17:00",
+        endtime: "18:00",
+        customername: "Emma Wilson",
+        package_name: "Economical",
+        lane_no: 1,
+        book_status: "confirmed",
       },
     ],
   },
@@ -107,13 +107,13 @@ const sampleBookedSlots = [
     day: "Thursday",
     bookings: [
       {
-        id: 6,
-        startTime: "15:00",
-        endTime: "17:00",
-        customerName: "Birthday Party",
-        package: "Birthday",
-        lane: "Lane 5",
-        status: "confirmed",
+        id: "6",
+        starttime: "15:00",
+        endtime: "17:00",
+        customername: "Birthday Party",
+        package_name: "Birthday",
+        lane_no: 5,
+        book_status: "confirmed",
       },
     ],
   },
@@ -122,22 +122,22 @@ const sampleBookedSlots = [
     day: "Friday",
     bookings: [
       {
-        id: 7,
-        startTime: "19:00",
-        endTime: "21:00",
-        customerName: "Team Event",
-        package: "Corporate",
-        lane: "Lane 3",
-        status: "confirmed",
+        id: "7",
+        starttime: "19:00",
+        endtime: "21:00",
+        customername: "Team Event",
+        package_name: "Corporate",
+        lane_no: 3,
+        book_status: "confirmed",
       },
       {
-        id: 8,
-        startTime: "14:00",
-        endTime: "15:00",
-        customerName: "Lisa Brown",
-        package: "Economical",
-        lane: "Lane 2",
-        status: "confirmed",
+        id: "8",
+        starttime: "14:00",
+        endtime: "15:00",
+        customername: "Lisa Brown",
+        package_name: "Economical",
+        lane_no: 2,
+        book_status: "confirmed",
       },
     ],
   },
@@ -151,7 +151,7 @@ export function BusinessHoursTab() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [bookedSlots] = useState(sampleBookedSlots)
-  const [weeklyBookings, setWeeklyBookings] = useState<{ [date: string]: Booking[] }>({})
+  const [weeklyBookings, setWeeklyBookings] = useState<{ [date: string]: SlotBooking[] }>({})
   const [timelineLoading, setTimelineLoading] = useState(true)
   const [timelineError, setTimelineError] = useState<string | null>(null)
 
@@ -160,32 +160,30 @@ export function BusinessHoursTab() {
     fetchBusinessHours()
   }, [])
 
-const fetchBusinessHours = async () => {
-  try {
-    setIsLoading(true)
-    setError(null)
+  const fetchBusinessHours = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
 
-    // Get the full response
-    const response = await businessHoursApi.getAllBusinessHours()
+      // Get the full response
+      const response = await businessHoursApi.getAllBusinessHours()
 
-    // Extract the data array
-    const hours: BusinessHour[] = response.data
+      // Extract the data array
+      const hours: BusinessHour[] = response.data
 
-    // Sort by day_no
-    const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
+      // Sort by day_no
+      const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
 
-    // Update state
-    setBusinessHours(sortedHours)
-  } catch (err) {
-    const errorMessage = handleApiError(err)
-    setError(errorMessage)
-    console.error("Failed to fetch business hours:", errorMessage)
-  } finally {
-    setIsLoading(false)
+      // Update state
+      setBusinessHours(sortedHours)
+    } catch (err) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+      console.error("Failed to fetch business hours:", errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
-
-
 
   useEffect(() => {
     const fetchWeeklyBookings = async () => {
@@ -202,9 +200,9 @@ const fetchBusinessHours = async () => {
         const bookings = sampleBookedSlots // Replace with actual API call when available
 
         // Group bookings by date
-        const groupedBookings: { [date: string]: Booking[] } = {}
+        const groupedBookings: { [date: string]: SlotBooking[] } = {}
         bookings.forEach((booking) => {
-          groupedBookings[booking.date] = booking.bookings
+          groupedBookings[booking.date] = booking.bookings as unknown as SlotBooking[]
         })
 
         setWeeklyBookings(groupedBookings)
@@ -230,12 +228,12 @@ const fetchBusinessHours = async () => {
         const updateData: UpdateBusinessHourRequest = {
           day_no: hour.day_no,
           day_name: hour.day_name,
-          startTime: hour.starttime,
-          endTime: hour.endtime,
-          offDay: hour.offday,
+          startTime: hour.startTime,
+          endTime: hour.endTime,
+          offDay: hour.offDay,
         }
 
-        return businessHoursApi.updateBusinessHourById(hour.id, updateData)
+        return businessHoursApi.updateBusinessHourById(hour._id, updateData)
       })
 
       await Promise.all(updatePromises)
@@ -259,17 +257,18 @@ const fetchBusinessHours = async () => {
   const handleHourChange = (index: number, field: string, value: any) => {
     const updated = [...businessHours]
     if (field === "isOpen") {
-      updated[index] = { ...updated[index], offday: !value }
+      updated[index] = { ...updated[index], offDay: !value }
     } else if (field === "openTime") {
-      updated[index] = { ...updated[index], starttime: `${value}:00` }
+      updated[index] = { ...updated[index], startTime: `${value}:00` }
     } else if (field === "closeTime") {
-      updated[index] = { ...updated[index], endtime: `${value}:00` }
+      updated[index] = { ...updated[index], endTime: `${value}:00` }
     }
     setBusinessHours(updated)
   }
 
   // Helper function to format time for input
   const formatTimeForInput = (timeString: string) => {
+    if (!timeString) return ""
     return timeString.slice(0, 5) // Remove seconds part
   }
 
@@ -287,6 +286,7 @@ const fetchBusinessHours = async () => {
   }
 
   const getPackageColor = (packageType: string) => {
+    if (!packageType) return "bg-gray-500"
     switch (packageType.toLowerCase()) {
       case "birthday party":
       case "birthday":
@@ -382,8 +382,8 @@ const fetchBusinessHours = async () => {
                   return null // Skip if no business hours found for the day
                 }
 
-                const startHour = Number.parseInt(businessHour.starttime.split(":")[0])
-                const endHour = Number.parseInt(businessHour.endtime.split(":")[0])
+                const startHour = Number.parseInt(businessHour.startTime.split(":")[0])
+                const endHour = Number.parseInt(businessHour.endTime.split(":")[0])
 
                 const generateTimelineMarkers = () => {
                   const markers = []
@@ -408,21 +408,23 @@ const fetchBusinessHours = async () => {
 
                 const renderBookingBlocks = () => {
                   return bookings.map((booking) => {
-                    const startPos = timeToPosition(booking.startTime, startHour, endHour)
-                    const width = getBookingWidth(booking.startTime, booking.endTime, startHour, endHour)
+                    const startPos = timeToPosition(booking.starttime, startHour, endHour)
+                    const width = getBookingWidth(booking.starttime, booking.endtime, startHour, endHour)
 
                     return (
                       <div
                         key={booking.id}
-                        className={`absolute top-1 h-10 rounded ${getPackageColor(booking.package)} opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium shadow-sm`}
+                        className={`absolute top-1 h-10 rounded ${getPackageColor(
+                          booking.package_name || "",
+                        )} opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium shadow-sm`}
                         style={{
                           left: `${startPos}%`,
                           width: `${width}%`,
                           minWidth: "60px",
                         }}
-                        title={`${booking.customerName} - ${booking.package} (${booking.startTime}-${booking.endTime})`}
+                        title={`${booking.customername} - ${booking.package_name} (${booking.starttime}-${booking.endtime})`}
                       >
-                        <span className="truncate px-1">{booking.customerName.split(" ")[0]}</span>
+                        <span className="truncate px-1">{booking.customername.split(" ")[0]}</span>
                       </div>
                     )
                   })
@@ -451,12 +453,12 @@ const fetchBusinessHours = async () => {
                       {generateTimelineMarkers()}
 
                       {/* Business Hours Timeline */}
-                      {!businessHour.offday && (
+                      {!businessHour.offDay && (
                         <div
                           className="absolute inset-y-0 bg-green-100 opacity-30"
                           style={{
-                            left: `${timeToPosition(businessHour.starttime, startHour, endHour)}%`,
-                            width: `${getBookingWidth(businessHour.starttime, businessHour.endtime, startHour, endHour)}%`,
+                            left: `${timeToPosition(businessHour.startTime, startHour, endHour)}%`,
+                            width: `${getBookingWidth(businessHour.startTime, businessHour.endTime, startHour, endHour)}%`,
                           }}
                         ></div>
                       )}
@@ -559,24 +561,24 @@ const fetchBusinessHours = async () => {
           ) : (
             <div className="space-y-4">
               {businessHours.map((day, index) => (
-                <div key={day.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={day._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="w-20 font-medium text-gray-900">{day.day_name}</div>
                     {editingHours ? (
                       <Switch
-                        checked={!day.offday}
+                        checked={!day.offDay}
                         onCheckedChange={(checked) => handleHourChange(index, "isOpen", checked)}
                       />
                     ) : (
                       <div
-                        className={`px-2 py-1 rounded text-sm ${!day.offday ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                        className={`px-2 py-1 rounded text-sm ${!day.offDay ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                       >
-                        {!day.offday ? "Open" : "Closed"}
+                        {!day.offDay ? "Open" : "Closed"}
                       </div>
                     )}
                   </div>
 
-                  {!day.offday && (
+                  {!day.offDay && (
                     <div className="flex items-center space-x-8">
                       {editingHours ? (
                         <>
@@ -587,7 +589,7 @@ const fetchBusinessHours = async () => {
                             <Input
                               id={`open-${index}`}
                               type="time"
-                              value={formatTimeForInput(day.starttime)}
+                              value={formatTimeForInput(day.startTime)}
                               onChange={(e) => handleHourChange(index, "openTime", e.target.value)}
                               className="w-28"
                             />
@@ -599,7 +601,7 @@ const fetchBusinessHours = async () => {
                             <Input
                               id={`close-${index}`}
                               type="time"
-                              value={formatTimeForInput(day.endtime)}
+                              value={formatTimeForInput(day.endTime)}
                               onChange={(e) => handleHourChange(index, "closeTime", e.target.value)}
                               className="w-28"
                             />
@@ -607,7 +609,7 @@ const fetchBusinessHours = async () => {
                         </>
                       ) : (
                         <div className="text-gray-600">
-                          {formatTimeForInput(day.starttime)} - {formatTimeForInput(day.endtime)}
+                          {formatTimeForInput(day.startTime)} - {formatTimeForInput(day.endTime)}
                         </div>
                       )}
                     </div>

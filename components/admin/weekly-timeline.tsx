@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, Plus, Clock } from "lucide-react"
-import { businessHoursApi, slotBookingApi,type BusinessHour, handleApiError } from "@/lib/api"
+import { businessHoursApi, slotBookingApi, type BusinessHour, type SlotBooking, handleApiError } from "@/lib/api"
 
 interface BookingSlot {
   id: string
@@ -23,48 +23,91 @@ interface DayBookings {
   bookings: BookingSlot[]
 }
 
-
-
 export function WeeklyTimeline() {
   const router = useRouter()
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
-const [weeklyBookings, setWeeklyBookings] = useState<DayBookings[]>([])
+  const [weeklyBookings, setWeeklyBookings] = useState<DayBookings[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
- useEffect(() => {
-  fetchBusinessHours()
-}, [])
+  useEffect(() => {
+    fetchBusinessHours()
+  }, [])
 
-useEffect(() => {
-  fetchWeeklyBooking()
-}, [businessHours])  // trigger booking fetch after hours are loaded
+  useEffect(() => {
+    if (businessHours.length > 0) {
+      fetchWeeklyBooking()
+    }
+  }, [businessHours])
 
+  const fetchBusinessHours = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
 
- const fetchBusinessHours = async () => {
-  try {
-    setIsLoading(true)
-    setError(null)
+      // Get the response and extract data array
+      const response = await businessHoursApi.getAllBusinessHours()
+      const hours: BusinessHour[] = response.data
 
-    // Destructure the array from response
-    const response = await businessHoursApi.getAllBusinessHours()
-    const hours: BusinessHour[] = response.data
+      // Sort by day_no
+      const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
 
-    // Sort by day_no
-    const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
-
-    // Update state
-    setBusinessHours(sortedHours)
-  } catch (err) {
-    const errorMessage = handleApiError(err)
-    setError(errorMessage)
-    console.error("Failed to fetch business hours:", errorMessage)
-  } finally {
-    setIsLoading(false)
+      // Update state
+      setBusinessHours(sortedHours)
+    } catch (err) {
+      const errorMessage = handleApiError(err)
+      setError(errorMessage)
+      console.error("Failed to fetch business hours:", errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
+  const fetchWeeklyBooking = async () => {
+    try {
+      const bookingsResponse = await slotBookingApi.getAllBookings()
+      const bookings: SlotBooking[] = bookingsResponse.data
 
+      // Debug: Log the first booking to see the structure
+      if (bookings.length > 0) {
+        console.log("Sample booking structure:", bookings[0])
+      }
+
+      const weekDates = getCurrentWeekDates()
+
+      const grouped: DayBookings[] = weekDates.map((weekDay) => {
+        const date = weekDay.date
+
+        const dayBookings: BookingSlot[] = bookings
+          .filter((b) => {
+            if (!b.date) return false
+            const bookingDate = new Date(b.date).toISOString().split("T")[0]
+            return bookingDate === date
+          })
+          .map((b) => ({
+            id: b._id || b.id || "",
+            startTime: (b.startTime || b.starttime || "").slice(0, 5),
+            endTime: (b.endTime || b.endtime || "").slice(0, 5),
+            customerName: b.customerName || b.customername || "",
+            package: b.package_name || "",
+            lane: (b.lane_no || 0).toString(),
+            status: (b.book_status?.toLowerCase() as "confirmed" | "pending" | "cancelled") ?? "pending",
+          }))
+          .filter((booking) => booking.startTime && booking.endTime) // Filter out invalid bookings
+
+        return {
+          date,
+          dayName: weekDay.dayName,
+          bookings: dayBookings,
+        }
+      })
+
+      setWeeklyBookings(grouped)
+    } catch (err) {
+      console.error("Error fetching weekly bookings:", err)
+      setWeeklyBookings([])
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -162,44 +205,6 @@ useEffect(() => {
     return weekDates
   }
 
-const fetchWeeklyBooking = async () => {
-  try {
-    const bookingsResponse = await slotBookingApi.getAllBookings()
-    const bookings: SlotBooking[] = bookingsResponse.data
-
-    const grouped: DayBookings[] = weekDates.map((weekDay) => {
-      const date = weekDay.date
-
-      const dayBookings: BookingSlot[] = bookings
-     .filter((b) => {
-  const bookingDate = new Date(b.date).toISOString().split("T")[0]
-  return bookingDate === date
-})
-
-        .map((b) => ({
-          id: b.id,
-          startTime: b.starttime.slice(0, 5),
-          endTime: b.endtime.slice(0, 5),
-          customerName: b.customername,
-          package: b.package_name ?? "",       
-          status: b.book_status ?? "Booked",   
-        }))
-
-      return {
-        date,
-        dayName: weekDay.dayName,
-        bookings: dayBookings,
-      }
-    })
-
-    setWeeklyBookings(grouped)
-  } catch (err) {
-    console.error("Error fetching weekly bookings:", err)
-    setWeeklyBookings([])
-  }
-}
-
-
   const weekDates = getCurrentWeekDates()
   const currentWeekBookings = weekDates.map((weekDay) => {
     const dayBookings = weeklyBookings.find((booking) => booking.date === weekDay.date)
@@ -261,32 +266,30 @@ const fetchWeeklyBooking = async () => {
       <CardContent>
         <div className="space-y-6">
           {currentWeekBookings.map((dayData) => {
-            // {console.log(dayData.date, dayData.bookings)}
             const businessHour = businessHours.find((bh) => bh.day_name === dayData.dayName)
 
             // Skip past days
             if (dayData.isPast) return null
 
             // Handle closed days
-            if (!businessHour || businessHour.offday) {
-              return (
-                <div key={dayData.date} className="space-y-2 opacity-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <h4 className="font-semibold text-gray-900 w-24">{dayData.dayName}</h4>
-                      <span className="text-sm text-gray-500">{dayData.date}</span>
-                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">CLOSED</span>
-                    </div>
-                  </div>
-                  <div className="h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">Closed</span>
-                  </div>
-                </div>
-              )
-            }
-
-            const startTime = businessHour.starttime.slice(0, 5) // Remove seconds
-            const endTime = businessHour.endtime.slice(0, 5) // Remove seconds
+       if (!businessHour || businessHour.offDay) {  // Changed from 'offday' to 'offDay'
+  return (
+    <div key={dayData.date} className="space-y-2 opacity-50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <h4 className="font-semibold text-gray-900 w-24">{dayData.dayName}</h4>
+          <span className="text-sm text-gray-500">{dayData.date}</span>
+          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">CLOSED</span>
+        </div>
+      </div>
+      <div className="h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+        <span className="text-gray-500 text-sm">Closed</span>
+      </div>
+    </div>
+  )
+}
+            const startTime = businessHour.startTime.slice(0, 5) // Remove seconds
+            const endTime = businessHour.endTime.slice(0, 5) // Remove seconds
 
             return (
               <div key={dayData.date} className="space-y-2">

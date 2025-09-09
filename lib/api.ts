@@ -1,7 +1,7 @@
 import axios from "axios"
 
-// Replace with your actual server URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+// Replace with your actual server URL - now using localhost:5001
+const API_BASE_URL = "http://localhost:5001"
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -37,10 +37,15 @@ export interface UpdateBusinessHourRequest {
   offDay?: boolean
 }
 
+// Business Hours Response Type
+export interface BusinessHoursResponse {
+  data: BusinessHour[]
+}
+
 // Business Hours API Functions
 export const businessHoursApi = {
   // Get all business hours
-  getAllBusinessHours: async (): Promise<BusinessHour[]> => {
+  getAllBusinessHours: async (): Promise<BusinessHoursResponse> => {
     try {
       const response = await api.get("/api/v1/businessHours/getAllBusinessHours")
       return response.data
@@ -96,14 +101,20 @@ export const businessHoursApi = {
 
 // Package API Types
 export interface Package {
-  id: string
-  pagename: string
+  id(id: any): void
+  _id: string
+  pageName: string
   img_url: string
-  title: string
+  Title: string
   subtitle: string
   description: string
-  cost: string
+  Cost: {
+    $numberDecimal: string
+  }
   no_of_person: number
+  createdAt: string
+  updatedAt: string
+  __v: number
 }
 
 export interface CreatePackageRequest {
@@ -190,17 +201,6 @@ export const packagesApi = {
   },
 }
 
-export interface BookingSlot {
-  id: string
-  startTime: string
-  endTime: string
-  customerName: string
-  package: string
-  status: string
-  lane: number // required by your rendering logic
-}
-
-
 // Slot Booking API Types
 export interface SlotBooking {
   id: string
@@ -212,6 +212,7 @@ export interface SlotBooking {
   endtime: string
   noofplayers: number
   package_id: string
+  package_name?: string // Optional field that might come from joined data
   lane_no: number
   book_status: string
   pay_status: string

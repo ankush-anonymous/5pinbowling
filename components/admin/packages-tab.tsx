@@ -98,12 +98,12 @@ export function PackagesTab() {
   const handleEditPackage = (pkg: PackageType) => {
     setEditingPackage(pkg)
     setFormData({
-      pageName: pkg.pagename,
+      pageName: pkg.pageName,
       img_url: pkg.img_url,
-      Title: pkg.title,
+      Title: pkg.Title,
       subtitle: pkg.subtitle,
       description: pkg.description,
-      Cost: pkg.cost,
+      Cost: pkg.Cost.$numberDecimal,
       no_of_person: pkg.no_of_person.toString(),
     })
     setIsEditDialogOpen(true)
@@ -123,7 +123,7 @@ export function PackagesTab() {
         no_of_person: Number(formData.no_of_person),
       }
 
-      await packagesApi.updatePackageById(editingPackage.id, updateData)
+      await packagesApi.updatePackageById(editingPackage._id, updateData)
       await fetchPackages()
       setIsEditDialogOpen(false)
       setEditingPackage(null)
@@ -175,20 +175,20 @@ export function PackagesTab() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
-                <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
+                <Card key={pkg._id} className="hover:shadow-lg transition-shadow">
                   <div className="relative">
                     <img
                       src={pkg.img_url || "/placeholder.svg?height=200&width=400"}
-                      alt={pkg.title}
+                      alt={pkg.Title}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                     <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-full text-sm font-medium">
-                      ${pkg.cost}
+                      ${pkg.Cost.$numberDecimal}
                     </div>
                   </div>
                   <CardContent className="p-4">
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{pkg.title}</h3>
+                      <h3 className="font-semibold text-lg text-gray-900">{pkg.Title}</h3>
                       <p className="text-sm text-gray-600">{pkg.subtitle}</p>
                       <p className="text-sm text-gray-700 line-clamp-3">{pkg.description}</p>
                       <div className="flex items-center justify-between pt-2">
@@ -198,7 +198,7 @@ export function PackagesTab() {
                         </div>
                         <div className="flex items-center space-x-1 text-sm font-medium text-primary">
                           <DollarSign className="w-4 h-4" />
-                          <span>{pkg.cost}</span>
+                          <span>{pkg.Cost.$numberDecimal}</span>
                         </div>
                       </div>
                     </div>
@@ -208,7 +208,7 @@ export function PackagesTab() {
                         Edit
                       </Button>
                       <Button
-                        onClick={() => handleDeletePackage(pkg.id)}
+                        onClick={() => handleDeletePackage(pkg._id)}
                         variant="outline"
                         size="sm"
                         className="flex-1 text-red-600 hover:text-red-700"
@@ -241,6 +241,7 @@ export function PackagesTab() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
+.
             <DialogTitle>Create New Package</DialogTitle>
             <DialogDescription>Add a new bowling package with all the details</DialogDescription>
           </DialogHeader>

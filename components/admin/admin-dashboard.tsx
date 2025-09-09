@@ -66,7 +66,7 @@ export function AdminDashboard() {
       </div>
 
       <Tabs defaultValue="bookings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="bookings" className="flex items-center space-x-2">
             <Calendar className="w-4 h-4" />
             <span>Bookings</span>
@@ -83,10 +83,10 @@ export function AdminDashboard() {
             <MessageSquare className="w-4 h-4" />
             <span>Updates</span>
           </TabsTrigger>
-          <TabsTrigger value="leagues" className="flex items-center space-x-2">
+          {/* <TabsTrigger value="leagues" className="flex items-center space-x-2">
             <Trophy className="w-4 h-4" />
             <span>Leagues</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="bookings" className="space-y-6">
@@ -105,9 +105,9 @@ export function AdminDashboard() {
           <UpdatesTab />
         </TabsContent>
 
-        <TabsContent value="leagues">
+        {/* <TabsContent value="leagues">
           <LeaguesTab />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   )
