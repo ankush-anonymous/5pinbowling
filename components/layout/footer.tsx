@@ -7,8 +7,21 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { businessHoursApi, type BusinessHour, handleApiError } from "@/lib/api"
 
+// Updated type to match API response
+interface ApiBusinessHour {
+  _id: string
+  day_no: number
+  day_name: string
+  startTime: string  // API uses startTime, not starttime
+  endTime: string    // API uses endTime, not endtime
+  offDay: boolean    // API uses offDay, not offday
+  createdAt: string
+  updatedAt: string
+  __v: number
+}
+
 const Footer = () => {
-  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
+  const [businessHours, setBusinessHours] = useState<ApiBusinessHour[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const footerRef = useRef<HTMLElement>(null)
@@ -24,9 +37,11 @@ const Footer = () => {
     const fetchBusinessHours = async () => {
       try {
         setIsLoading(true)
-        const hours = await businessHoursApi.getAllBusinessHours()
+        const response = await businessHoursApi.getAllBusinessHours()
+        // Handle the data property from API response
+        const hours = response.data || response
         // Sort by day_no to ensure correct order
-        const sortedHours = hours.sort((a, b) => a.day_no - b.day_no)
+        const sortedHours = hours.sort((a: ApiBusinessHour, b: ApiBusinessHour) => a.day_no - b.day_no)
         setBusinessHours(sortedHours)
       } catch (err) {
         const errorMessage = handleApiError(err)
@@ -60,7 +75,8 @@ const Footer = () => {
     }
   }, [])
 
-  function HoursBar({ day_name, starttime, endtime, offday }: BusinessHour) {
+  // Updated component to use correct property names
+  function HoursBar({ day_name, startTime, endTime, offDay }: ApiBusinessHour) {
     const barRef = useRef<HTMLDivElement>(null)
 
     // Convert time format from "HH:MM:SS" to hour number
@@ -69,16 +85,16 @@ const Footer = () => {
       return hours
     }
 
-    const startHour = offday ? 0 : timeToHour(starttime)
-    const endHour = offday ? 0 : timeToHour(endtime)
+    const startHour = offDay ? 0 : timeToHour(startTime)
+    const endHour = offDay ? 0 : timeToHour(endTime)
 
-    // Calculate percentage based on 11AM (11) to 11PM (23) scale
+    // Calculate percentage based on 11AM (11) to 8PM (20) scale for better visualization
     const scaleStart = 11
-    const scaleEnd = 23
+    const scaleEnd = 20
     const totalHours = scaleEnd - scaleStart
 
-    const startPercent = offday ? 0 : ((startHour - scaleStart) / totalHours) * 100
-    const widthPercent = offday ? 0 : ((endHour - startHour) / totalHours) * 100
+    const startPercent = offDay ? 0 : Math.max(0, ((startHour - scaleStart) / totalHours) * 100)
+    const widthPercent = offDay ? 0 : Math.min(100, ((endHour - startHour) / totalHours) * 100)
 
     // Format display time
     const formatTime = (timeString: string) => {
@@ -89,10 +105,10 @@ const Footer = () => {
       return `${displayHour}:${minutes} ${ampm}`
     }
 
-    const displayHours = offday ? "CLOSED" : `${formatTime(starttime)} - ${formatTime(endtime)}`
+    const displayHours = offDay ? "CLOSED" : `${formatTime(startTime)} - ${formatTime(endTime)}`
 
     useEffect(() => {
-      if (barRef.current && !offday) {
+      if (barRef.current && !offDay) {
         gsap.fromTo(
           barRef.current,
           { scaleX: 0 },
@@ -109,7 +125,7 @@ const Footer = () => {
           },
         )
       }
-    }, [offday])
+    }, [offDay])
 
     return (
       <div className="flex items-center justify-between py-3 group hover:bg-white/5 rounded-lg px-2 lg:px-4 transition-all duration-300">
@@ -120,7 +136,7 @@ const Footer = () => {
         <div className="flex-1 mx-2 lg:mx-6 relative">
           {/* Background track */}
           <div className="h-4 lg:h-8 bg-gray-700/50 rounded-full relative overflow-hidden">
-            {!offday && (
+            {!offDay && (
               <div
                 ref={barRef}
                 className="absolute h-full bg-gradient-to-r from-primary to-burgundy-600 rounded-full border border-primary/30 lg:border-2 shadow-lg origin-left"
@@ -130,17 +146,17 @@ const Footer = () => {
                 }}
               />
             )}
-            {offday && (
+            {offDay && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-gray-400 text-xs font-medium">CLOSED</span>
               </div>
             )}
           </div>
 
-          {/* Time markers */}
+          {/* Time markers - updated to match business hours range */}
           <div className="flex justify-between text-xs text-gray-400 mt-1">
             <span>11AM</span>
-            <span>11PM</span>
+            <span>8PM</span>
           </div>
         </div>
 
@@ -188,7 +204,7 @@ const Footer = () => {
             ) : (
               <div className="space-y-2">
                 {businessHours.map((schedule) => (
-                  <HoursBar key={schedule.id} {...schedule} />
+                  <HoursBar key={schedule._id} {...schedule} />
                 ))}
               </div>
             )}

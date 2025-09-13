@@ -118,7 +118,7 @@ export function PackagesHeroSection() {
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {packages.map((pkg, index) => (
               <Card
-                key={pkg.id}
+                key={pkg._id}
                 className="overflow-hidden shadow-2xl border-0 hover:shadow-3xl transition-all duration-700 transform hover:-translate-y-6 hover:scale-105 group cursor-pointer bg-gradient-to-br from-white to-gray-50 relative"
                 ref={(el) => {
                   if (el) cardsRef.current[index] = el
@@ -131,7 +131,7 @@ export function PackagesHeroSection() {
                   <div className="relative overflow-hidden">
                     <Image
                       src={pkg.img_url || "/placeholder.svg?height=300&width=600"}
-                      alt={pkg.title}
+                      alt={pkg.Title}
                       width={600}
                       height={300}
                       className="w-full h-56 sm:h-64 object-cover group-hover:scale-110 transition-transform duration-700"
@@ -140,12 +140,12 @@ export function PackagesHeroSection() {
                     <div className="absolute top-4 right-4 bg-primary text-white px-3 py-2 rounded-full text-sm font-bold shadow-lg">
                       <span className="flex items-center space-x-1">
                         <Star className="w-4 h-4 fill-current" />
-                        <span>{pkg.pagename}</span>
+                        <span>{pkg.pageName}</span>
                       </span>
                     </div>
                     <div className="absolute bottom-4 left-4 text-white">
-                      <h3 className="text-xl font-bold mb-1">{pkg.title}</h3>
-                      <div className="text-3xl font-bold">${pkg.cost}</div>
+                      <h3 className="text-xl font-bold mb-1">{pkg.Title}</h3>
+                      <div className="text-3xl font-bold">${pkg.Cost.$numberDecimal}</div>
                       <div className="text-sm opacity-90">{pkg.subtitle}</div>
                     </div>
                   </div>
@@ -159,7 +159,7 @@ export function PackagesHeroSection() {
                         </div>
                         <div className="flex items-center space-x-2 text-gray-700 bg-gray-50 p-3 rounded-lg">
                           <Gift className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium">{pkg.pagename}</span>
+                          <span className="text-sm font-medium">{pkg.pageName}</span>
                         </div>
                       </div>
 
@@ -168,7 +168,7 @@ export function PackagesHeroSection() {
 
                     <div className="mt-6 pt-4 border-t border-gray-200">
                       <Button className="w-full bg-primary hover:bg-burgundy-700 text-base py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-xl group-hover:shadow-2xl">
-                        Book {pkg.pagename}
+                        Book {pkg.pageName}
                       </Button>
                     </div>
                   </CardContent>

@@ -101,7 +101,6 @@ export const businessHoursApi = {
 
 // Package API Types
 export interface Package {
-  id(id: any): void
   _id: string
   pageName: string
   img_url: string
@@ -197,6 +196,76 @@ export const packagesApi = {
     } catch (error) {
       console.error("Error deleting package:", error)
       throw new Error("Failed to delete package")
+    }
+  },
+}
+
+// Update API Types
+export interface Update {
+  _id: string
+  title: string
+  subtitle: string
+  body: string
+  image_url: string
+  isArchived: boolean
+  author: string
+  dateOfCreation: string
+  createdAt: string
+  updatedAt: string
+  __v: number
+}
+
+export interface UpdatesResponse {
+  currentPage: number
+  totalPages: number
+  totalUpdates: number
+  data: Update[]
+}
+
+// Update API Functions
+export const updatesApi = {
+  // Get all updates
+  getAllUpdates: async (): Promise<UpdatesResponse> => {
+    try {
+      const response = await api.get("/api/v1/updates/getAllUpdates")
+      return response.data
+    } catch (error) {
+      console.error("Error fetching updates:", error)
+      throw new Error("Failed to fetch updates")
+    }
+  },
+
+  // Get update by ID
+  getUpdateById: async (id: string): Promise<Update> => {
+    try {
+      const response = await api.get(`/api/v1/updates/getUpdateById/${id}`)
+      return response.data
+    } catch (error) {
+      console.error("Error fetching update by ID:", error)
+      throw new Error("Failed to fetch update")
+    }
+  },
+}
+
+// Mail API Types
+export interface ContactFormRequest {
+  name: string
+  email: string
+  subject: string
+  phone: string
+  message: string
+}
+
+// Mail API Functions
+export const mailApi = {
+  // Send contact form
+  sendContactForm: async (data: ContactFormRequest): Promise<any> => {
+    try {
+      const response = await api.post("/api/v1/mail/contact", data)
+      return response.data
+    } catch (error) {
+      console.error("Error sending contact form:", error)
+      throw new Error("Failed to send contact form")
     }
   },
 }

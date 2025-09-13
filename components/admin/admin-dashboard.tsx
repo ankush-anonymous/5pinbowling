@@ -8,6 +8,7 @@ import { UpdatesTab } from "./updates-tab"
 import { LeaguesTab } from "./leagues-tab"
 import { PackagesTab } from "./packages-tab"
 import { WeeklyTimeline } from "./weekly-timeline"
+import { AvailableSlots } from "./available-slots"
 
 // Mock data for booked slots timeline
 // const mockBookedSlots = [
@@ -90,7 +91,7 @@ export function AdminDashboard() {
         </TabsList>
 
         <TabsContent value="bookings" className="space-y-6">
-          <WeeklyTimeline />
+          <AvailableSlots />
         </TabsContent>
 
         <TabsContent value="packages">

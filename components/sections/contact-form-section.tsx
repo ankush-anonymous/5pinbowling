@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Send, User, Mail, MessageSquare } from "lucide-react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { mailApi, handleApiError } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
@@ -26,6 +28,8 @@ export function ContactFormSection() {
     subject: "",
     message: "",
   })
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (sectionRef.current && formRef.current && graphicsRef.current) {
@@ -55,9 +59,26 @@ export function ContactFormSection() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Contact form submitted:", formData)
+    setIsSubmitting(true)
+    try {
+      await mailApi.sendContactForm(formData)
+      toast({
+        title: "Message Sent!",
+        description: "We have received your message and will get back to you shortly.",
+      })
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" })
+    } catch (err) {
+      const errorMessage = handleApiError(err)
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -165,9 +186,19 @@ export function ContactFormSection() {
                     type="submit"
                     size="lg"
                     className="w-full bg-primary hover:bg-burgundy-700 transform hover:scale-105 transition-all duration-300 hover:shadow-xl"
+                    disabled={isSubmitting}
                   >
-                    <Send className="w-5 h-5 mr-2" />
-                    Send Message
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 mr-2" />
+                        Send Message
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
