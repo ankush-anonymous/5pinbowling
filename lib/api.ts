@@ -13,12 +13,12 @@ const api = axios.create({
 
 // Business Hours API Types
 export interface BusinessHour {
-  id: string
+  _id: string
   day_no: number
   day_name: string
-  starttime: string
-  endtime: string
-  offday: boolean
+  startTime: string
+  endTime: string
+  offDay: boolean
 }
 
 export interface CreateBusinessHourRequest {
@@ -201,18 +201,20 @@ export const packagesApi = {
 }
 
 // Update API Types
-export interface Update {
+export interface Update extends CreateUpdateRequest {
   _id: string
+  createdAt: string
+  updatedAt: string
+  __v: number
+}
+
+export interface CreateUpdateRequest {
   title: string
   subtitle: string
   body: string
   image_url: string
   isArchived: boolean
   author: string
-  dateOfCreation: string
-  createdAt: string
-  updatedAt: string
-  __v: number
 }
 
 export interface UpdatesResponse {
@@ -220,6 +222,14 @@ export interface UpdatesResponse {
   totalPages: number
   totalUpdates: number
   data: Update[]
+}
+
+export interface UpdateUpdateRequest {
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  image_url?: string;
+  isArchived?: boolean;
 }
 
 // Update API Functions
@@ -243,6 +253,37 @@ export const updatesApi = {
     } catch (error) {
       console.error("Error fetching update by ID:", error)
       throw new Error("Failed to fetch update")
+    }
+  },
+
+  // Update update by ID
+  updateUpdateById: async (id: string, data: UpdateUpdateRequest): Promise<Update> => {
+    try {
+      const response = await api.put(`/api/v1/updates/updateUpdateById/${id}`, data)
+      return response.data
+    } catch (error) {
+      console.error("Error updating update:", error)
+      throw new Error("Failed to update update")
+    }
+  },
+
+  // Delete update by ID
+  deleteUpdateById: async (id: string): Promise<void> => {
+    try {
+      await api.delete(`/api/v1/updates/deleteUpdateById/${id}`)
+    } catch (error) {
+      console.error("Error deleting update:", error)
+      throw new Error("Failed to delete update")
+    }
+  },
+
+  createUpdate: async (data: CreateUpdateRequest): Promise<Update> => {
+    try {
+      const response = await api.post("/api/v1/updates/createUpdate", data)
+      return response.data
+    } catch (error) {
+      console.error("Error creating update:", error)
+      throw new Error("Failed to create update")
     }
   },
 }
@@ -272,15 +313,15 @@ export const mailApi = {
 
 // Slot Booking API Types
 export interface SlotBooking {
-  id: string
-  customername: string
+  _id: string
+  customerName: string
   email: string
   phone: string
   date: string
-  starttime: string
-  endtime: string
-  noofplayers: number
-  package_id: string
+  startTime: string
+  endTime: string
+  noOfPlayers: number
+  package_id: Package | string | null
   package_name?: string // Optional field that might come from joined data
   lane_no: number
   book_status: string

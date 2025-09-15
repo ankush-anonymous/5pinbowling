@@ -6,37 +6,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Edit, Trash2, Plus, PackageIcon, DollarSign, Users } from "lucide-react"
+import { Plus, Package as PackageIcon, Edit, Trash2 } from "lucide-react"
 import {
   packagesApi,
   type Package as PackageType,
   type CreatePackageRequest,
-  type UpdatePackageRequest,
   handleApiError,
 } from "@/lib/api"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export function PackagesTab() {
   const [packages, setPackages] = useState<PackageType[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingPackage, setEditingPackage] = useState<PackageType | null>(null)
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const [packageForm, setPackageForm] = useState<CreatePackageRequest>({
     pageName: "",
     img_url: "",
     Title: "",
     subtitle: "",
     description: "",
-    Cost: "",
-    no_of_person: "",
+    Cost: 0,
+    no_of_person: 0,
   })
 
   useEffect(() => {
@@ -44,107 +38,61 @@ export function PackagesTab() {
   }, [])
 
   const fetchPackages = async () => {
+    setIsLoading(true)
+    setError(null)
     try {
-      setIsLoading(true)
       const response = await packagesApi.getAllPackages()
       setPackages(response.data)
-    } catch (error) {
-      console.error("Failed to fetch packages:", handleApiError(error))
-      alert("Failed to fetch packages")
+    } catch (err) {
+      setError(handleApiError(err))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setPackageForm((prev) => ({
+      ...prev,
+      [name]: name === "Cost" || name === "no_of_person" ? Number(value) : value,
+    }))
   }
 
-  const resetForm = () => {
-    setFormData({
-      pageName: "",
-      img_url: "",
-      Title: "",
-      subtitle: "",
-      description: "",
-      Cost: "",
-      no_of_person: "",
-    })
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setFormError(null)
 
-  const handleCreatePackage = async () => {
     try {
-      const createData: CreatePackageRequest = {
-        pageName: formData.pageName,
-        img_url: formData.img_url,
-        Title: formData.Title,
-        subtitle: formData.subtitle,
-        description: formData.description,
-        Cost: Number(formData.Cost),
-        no_of_person: Number(formData.no_of_person),
-      }
-
-      await packagesApi.createPackage(createData)
-      await fetchPackages()
-      setIsCreateDialogOpen(false)
-      resetForm()
+      await packagesApi.createPackage(packageForm)
       alert("Package created successfully!")
-    } catch (error) {
-      console.error("Failed to create package:", handleApiError(error))
-      alert("Failed to create package")
-    }
-  }
-
-  const handleEditPackage = (pkg: PackageType) => {
-    setEditingPackage(pkg)
-    setFormData({
-      pageName: pkg.pageName,
-      img_url: pkg.img_url,
-      Title: pkg.Title,
-      subtitle: pkg.subtitle,
-      description: pkg.description,
-      Cost: pkg.Cost.$numberDecimal,
-      no_of_person: pkg.no_of_person.toString(),
-    })
-    setIsEditDialogOpen(true)
-  }
-
-  const handleUpdatePackage = async () => {
-    if (!editingPackage) return
-
-    try {
-      const updateData: UpdatePackageRequest = {
-        pageName: formData.pageName,
-        img_url: formData.img_url,
-        Title: formData.Title,
-        subtitle: formData.subtitle,
-        description: formData.description,
-        Cost: Number(formData.Cost),
-        no_of_person: Number(formData.no_of_person),
-      }
-
-      await packagesApi.updatePackageById(editingPackage._id, updateData)
-      await fetchPackages()
-      setIsEditDialogOpen(false)
-      setEditingPackage(null)
-      resetForm()
-      alert("Package updated successfully!")
-    } catch (error) {
-      console.error("Failed to update package:", handleApiError(error))
-      alert("Failed to update package")
+      setPackageForm({
+        pageName: "",
+        img_url: "",
+        Title: "",
+        subtitle: "",
+        description: "",
+        Cost: 0,
+        no_of_person: 0,
+      }) // Clear form
+      fetchPackages() // Refresh list
+    } catch (err) {
+      setFormError(handleApiError(err))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDeletePackage = async (id: string) => {
-    if (confirm("Are you sure you want to delete this package?")) {
-      try {
-        await packagesApi.deletePackageById(id)
-        await fetchPackages()
-        alert("Package deleted successfully!")
-      } catch (error) {
-        console.error("Failed to delete package:", handleApiError(error))
-        alert("Failed to delete package")
-      }
+    if (!window.confirm("Are you sure you want to delete this package?")) {
+      return
+    }
+    try {
+      await packagesApi.deletePackageById(id)
+      alert("Package deleted successfully!")
+      fetchPackages() // Refresh list
+    } catch (err) {
+      alert(`Failed to delete package: ${handleApiError(err)}`)
     }
   }
 
@@ -152,19 +100,116 @@ export function PackagesTab() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
-                <PackageIcon className="w-5 h-5" />
-                <span>Package Management</span>
-              </CardTitle>
-              <CardDescription>Create and manage bowling packages</CardDescription>
+          <CardTitle className="flex items-center space-x-2">
+            <PackageIcon className="w-5 h-5" />
+            <span>Create New Package</span>
+          </CardTitle>
+          <CardDescription>Add a new bowling package for your customers</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {formError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
+            )}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="pageName">Page Name *</Label>
+                <Input
+                  id="pageName"
+                  name="pageName"
+                  value={packageForm.pageName}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Birthday Bash"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="img_url">Image URL *</Label>
+                <Input
+                  id="img_url"
+                  name="img_url"
+                  value={packageForm.img_url}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="Title">Title *</Label>
+                <Input
+                  id="Title"
+                  name="Title"
+                  value={packageForm.Title}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Ultimate Birthday Package"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="subtitle">Subtitle</Label>
+                <Input
+                  id="subtitle"
+                  name="subtitle"
+                  value={packageForm.subtitle}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Celebrate in style"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="Cost">Cost *</Label>
+                <Input
+                  id="Cost"
+                  name="Cost"
+                  type="number"
+                  value={packageForm.Cost}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 79.99"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="no_of_person">Number of Persons *</Label>
+                <Input
+                  id="no_of_person"
+                  name="no_of_person"
+                  type="number"
+                  value={packageForm.no_of_person}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 8"
+                  required
+                />
+              </div>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Add Package</span>
-            </Button>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={packageForm.description}
+                onChange={handleInputChange}
+                placeholder="Detailed description of the package..."
+                rows={4}
+                required
+              />
+            </div>
+            <div className="flex justify-end space-x-4 pt-6 border-t">
+              <Button type="submit" disabled={isSubmitting}>
+                <Plus className="w-4 h-4 mr-2" />
+                {isSubmitting ? "Creating..." : "Create Package"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Existing Packages</CardTitle>
+          <CardDescription>Manage your bowling packages</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -172,247 +217,51 @@ export function PackagesTab() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-gray-600">Loading packages...</p>
             </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-4">Error: {error}</p>
+              <Button onClick={fetchPackages} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No packages found. Create one above!</p>
+            </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
-                <Card key={pkg._id} className="hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    <img
-                      src={pkg.img_url || "/placeholder.svg?height=200&width=400"}
-                      alt={pkg.Title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                    <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-full text-sm font-medium">
-                      ${pkg.Cost.$numberDecimal}
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{pkg.Title}</h3>
-                      <p className="text-sm text-gray-600">{pkg.subtitle}</p>
-                      <p className="text-sm text-gray-700 line-clamp-3">{pkg.description}</p>
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center space-x-1 text-sm text-gray-600">
-                          <Users className="w-4 h-4" />
-                          <span>{pkg.no_of_person} people</span>
-                        </div>
-                        <div className="flex items-center space-x-1 text-sm font-medium text-primary">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{pkg.Cost.$numberDecimal}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2 mt-4">
-                      <Button onClick={() => handleEditPackage(pkg)} variant="outline" size="sm" className="flex-1">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
+                <Card key={pkg._id}>
+                  <CardHeader className="relative pb-0">
+                    {pkg.img_url && (
+                      <img
+                        src={pkg.img_url}
+                        alt={pkg.Title}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                      />
+                    )}
+                    <div className="absolute top-2 right-2 flex space-x-2">
+                      <Button variant="secondary" size="icon" className="rounded-full">
+                        <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        onClick={() => handleDeletePackage(pkg._id)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
+                      <Button variant="destructive" size="icon" className="rounded-full" onClick={() => handleDeletePackage(pkg._id)}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <h3 className="text-xl font-bold mb-1">{pkg.Title}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{pkg.subtitle}</p>
+                    <p className="text-lg font-semibold text-primary mb-2">${pkg.Cost.$numberDecimal}</p>
+                    <p className="text-sm text-gray-600 mb-2">{pkg.description}</p>
+                    <p className="text-sm text-gray-500">For {pkg.no_of_person} people</p>
                   </CardContent>
                 </Card>
               ))}
-
-              {packages.length === 0 && (
-                <div className="col-span-full text-center py-12">
-                  <PackageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No packages found</h3>
-                  <p className="text-gray-600 mb-4">Create your first package to get started</p>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Package
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Create Package Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-.
-            <DialogTitle>Create New Package</DialogTitle>
-            <DialogDescription>Add a new bowling package with all the details</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Page Name</Label>
-                <Input
-                  value={formData.pageName}
-                  onChange={(e) => handleInputChange("pageName", e.target.value)}
-                  placeholder="Birthday Bash"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={formData.Title}
-                  onChange={(e) => handleInputChange("Title", e.target.value)}
-                  placeholder="Ultimate Birthday Package"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                value={formData.img_url}
-                onChange={(e) => handleInputChange("img_url", e.target.value)}
-                placeholder="https://example.com/images/birthday.jpg"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input
-                value={formData.subtitle}
-                onChange={(e) => handleInputChange("subtitle", e.target.value)}
-                placeholder="Celebrate in style"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="This package includes 2 hours of bowling, pizza, drinks, and decorations for up to 8 people."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cost</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.Cost}
-                  onChange={(e) => handleInputChange("Cost", e.target.value)}
-                  placeholder="4999.99"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Number of People</Label>
-                <Input
-                  type="number"
-                  value={formData.no_of_person}
-                  onChange={(e) => handleInputChange("no_of_person", e.target.value)}
-                  placeholder="8"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreatePackage}>Create Package</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Package Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Package</DialogTitle>
-            <DialogDescription>Update package details</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Page Name</Label>
-                <Input
-                  value={formData.pageName}
-                  onChange={(e) => handleInputChange("pageName", e.target.value)}
-                  placeholder="Birthday Bash"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={formData.Title}
-                  onChange={(e) => handleInputChange("Title", e.target.value)}
-                  placeholder="Ultimate Birthday Package"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                value={formData.img_url}
-                onChange={(e) => handleInputChange("img_url", e.target.value)}
-                placeholder="https://example.com/images/birthday.jpg"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input
-                value={formData.subtitle}
-                onChange={(e) => handleInputChange("subtitle", e.target.value)}
-                placeholder="Celebrate in style"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="This package includes 2 hours of bowling, pizza, drinks, and decorations for up to 8 people."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cost</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.Cost}
-                  onChange={(e) => handleInputChange("Cost", e.target.value)}
-                  placeholder="4999.99"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Number of People</Label>
-                <Input
-                  type="number"
-                  value={formData.no_of_person}
-                  onChange={(e) => handleInputChange("no_of_person", e.target.value)}
-                  placeholder="8"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdatePackage}>Update Package</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

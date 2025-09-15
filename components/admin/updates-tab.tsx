@@ -1,23 +1,63 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { FileText, Upload, Plus } from "lucide-react"
+import { updatesApi, type Update, handleApiError } from "@/lib/api"
+import { UpdateDetailsModal } from "./update-details-modal"
 
 export function UpdatesTab() {
+  const [updates, setUpdates] = useState<Update[]>([])
+  const [selectedUpdate, setSelectedUpdate] = useState<Update | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [updateForm, setUpdateForm] = useState({
     title: "",
     subtitle: "",
     body: "",
-    image: null as File | null,
+    image_url: "",
+    author: "Admin", // Default author
+    isArchived: false,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchUpdates()
+  }, [])
+
+  const fetchUpdates = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await updatesApi.getAllUpdates()
+      setUpdates(response.data)
+    } catch (err) {
+      setError(handleApiError(err))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOpenModal = (update: Update) => {
+    setSelectedUpdate(update)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedUpdate(null)
+    setIsModalOpen(false)
+  }
+
+  const handleUpdate = () => {
+    fetchUpdates() // Refetch updates after an update or delete operation
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -138,51 +178,45 @@ export function UpdatesTab() {
         </CardContent>
       </Card>
 
-      {/* Recent Updates */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Updates</CardTitle>
           <CardDescription>Manage your published updates</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[
-              {
-                id: 1,
-                title: "New Computer Scoring System Installation",
-                subtitle: "Enhanced bowling experience coming soon",
-                date: "2024-01-15",
-                status: "Published",
-              },
-              {
-                id: 2,
-                title: "Extended Weekend Hours",
-                subtitle: "More time for family fun",
-                date: "2024-01-10",
-                status: "Published",
-              },
-            ].map((update) => (
-              <div key={update.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-gray-900">{update.title}</h4>
-                    <p className="text-sm text-gray-600">{update.subtitle}</p>
-                    <p className="text-xs text-gray-500">Published on {update.date}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
-                      Delete
-                    </Button>
+          {isLoading ? (
+            <p>Loading updates...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <div className="space-y-4">
+              {updates.map((update) => (
+                <div key={update._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-gray-900">{update.title}</h4>
+                      <p className="text-sm text-gray-600">{update.subtitle}</p>
+                      <p className="text-xs text-gray-500">Published on {new Date(update.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleOpenModal(update)}>
+                        View / Edit
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <UpdateDetailsModal
+        update={selectedUpdate}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onUpdate={handleUpdate}
+      />
     </div>
   )
 }

@@ -16,12 +16,38 @@ import {
   packagesApi,
   type CreateSlotBookingRequest,
   type Package as PackageType,
+  type BusinessHour,
+  businessHoursApi,
   handleApiError,
 } from "@/lib/api"
+
+const getDayName = (date: Date) => {
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ]
+  return days[date.getUTCDay()]
+}
+
+const generateTimeSlots = (startHour: number, endHour: number) => {
+  const slots = []
+  for (let i = startHour; i < endHour; i++) {
+    const time = `${i.toString().padStart(2, "0")}:00`
+    slots.push(time)
+  }
+  return slots
+}
 
 export function NewBookingForm() {
   const router = useRouter()
   const [packages, setPackages] = useState<PackageType[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
+  const [timeSlots, setTimeSlots] = useState<string[]>([])
   // Add these state variables at the top
   const [pizzaTypes, setPizzaTypes] = useState<string[]>([])
   const [shoeSizes, setShoeSizes] = useState<string[]>([])
@@ -45,8 +71,38 @@ export function NewBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    if (formData.date) {
+      const dayName = getDayName(new Date(formData.date))
+      const dayHours = businessHours.find(
+        (bh) => bh.day_name.toLowerCase() === dayName.toLowerCase()
+      )
+
+      if (dayHours && !dayHours.offDay) {
+        const startHour = Number.parseInt(dayHours.startTime.split(":")[0])
+        const endHour = Number.parseInt(dayHours.endTime.split(":")[0])
+        const slots = generateTimeSlots(startHour, endHour)
+        setTimeSlots(slots)
+      } else {
+        setTimeSlots([])
+      }
+      // Reset start and end times when date changes
+      setFormData((prev) => ({ ...prev, startTime: "", endTime: "" }))
+    }
+  }, [formData.date, businessHours])
+
+  useEffect(() => {
     fetchPackages()
+    fetchBusinessHours()
   }, [])
+
+  const fetchBusinessHours = async () => {
+    try {
+      const response = await businessHoursApi.getAllBusinessHours()
+      setBusinessHours(response.data)
+    } catch (error) {
+      console.error("Failed to fetch business hours:", handleApiError(error))
+    }
+  }
 
   const fetchPackages = async () => {
     try {
@@ -203,23 +259,45 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="startTime">Start Time *</Label>
-                    <Input
-                      id="startTime"
-                      type="time"
+                    <Select
                       value={formData.startTime}
-                      onChange={(e) => handleInputChange("startTime", e.target.value)}
+                      onValueChange={(value) => handleInputChange("startTime", value)}
                       required
-                    />
+                      disabled={!formData.date || timeSlots.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select start time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((slot) => (
+                          <SelectItem key={slot} value={slot}>
+                            {slot}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endTime">End Time *</Label>
-                    <Input
-                      id="endTime"
-                      type="time"
+                    <Select
                       value={formData.endTime}
-                      onChange={(e) => handleInputChange("endTime", e.target.value)}
+                      onValueChange={(value) => handleInputChange("endTime", value)}
                       required
-                    />
+                      disabled={!formData.date || timeSlots.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select end time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots
+                          .filter((slot) => slot > formData.startTime) // Only show slots after start time
+                          .map((slot) => (
+                            <SelectItem key={slot} value={slot}>
+                              {slot}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="noOfPlayers">Number of Players *</Label>
@@ -255,7 +333,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </SelectTrigger>
                       <SelectContent>
                         {packages.map((pkg) => (
-                          <SelectItem key={pkg._id} value={pkg._id}>
+                          <SelectItem key={pkg._id} value={pkg._id} className="whitespace-normal">
                             {pkg.Title} - ${pkg.Cost.$numberDecimal}
                           </SelectItem>
                         ))}

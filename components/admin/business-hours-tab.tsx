@@ -7,17 +7,86 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Edit, Save, X, Clock, Calendar, Plus } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Edit, Save, X, Clock, Calendar, Plus, DollarSign, Activity, Users } from "lucide-react"
 import {
   businessHoursApi,
   type BusinessHour,
   type UpdateBusinessHourRequest,
   handleApiError,
   type SlotBooking,
+  slotBookingApi,
 } from "@/lib/api"
 import dayjs from "dayjs"
 import "dayjs/locale/en"
 dayjs.locale("en")
+
+interface WeeklyStatsProps {
+  bookings: SlotBooking[];
+}
+
+function WeeklyStats({ bookings }: WeeklyStatsProps) {
+  const totalPeople = bookings.reduce((sum, b) => sum + (b.noOfPlayers || 0), 0);
+
+  const totalHours = bookings.reduce((sum, b) => {
+    if (b.startTime && b.endTime) {
+      try {
+        const start = new Date(`1970-01-01T${b.startTime}`);
+        const end = new Date(`1970-01-01T${b.endTime}`);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+          return sum + duration;
+        }
+      } catch (e) {
+        console.error("Invalid time format", b.startTime, b.endTime);
+        return sum;
+      }
+    }
+    return sum;
+  }, 0);
+
+  const totalRevenue = bookings.reduce((sum, b) => {
+    if (b.package_id && typeof b.package_id === 'object' && b.package_id.Cost) {
+      return sum + parseFloat(b.package_id.Cost.$numberDecimal);
+    }
+    return sum;
+  }, 0);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground">Revenue from packages this week</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Bookings Hours</CardTitle>
+          <Activity className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalHours.toFixed(1)}</div>
+          <p className="text-xs text-muted-foreground">Total hours of bookings this week</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Guests</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">+{totalPeople}</div>
+          <p className="text-xs text-muted-foreground">Number of guests this week</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 const initialBusinessHours = [
   { day: "Monday", isOpen: false, openTime: "12:00", closeTime: "21:00" },
@@ -29,119 +98,7 @@ const initialBusinessHours = [
   { day: "Sunday", isOpen: true, openTime: "11:00", closeTime: "19:00" },
 ]
 
-const sampleBookedSlots = [
-  {
-    date: "2024-01-20",
-    day: "Saturday",
-    bookings: [
-      {
-        id: "1",
-        starttime: "14:00",
-        endtime: "16:00",
-        customername: "John Smith",
-        package_name: "Birthday Party",
-        lane_no: 3,
-        book_status: "confirmed",
-      },
-      {
-        id: "2",
-        starttime: "16:30",
-        endtime: "17:30",
-        customername: "Sarah Johnson",
-        package_name: "Economical",
-        lane_no: 1,
-        book_status: "confirmed",
-      },
-      {
-        id: "3",
-        starttime: "18:00",
-        endtime: "20:00",
-        customername: "Mike Davis",
-        package_name: "Corporate",
-        lane_no: 2,
-        book_status: "pending",
-      },
-    ],
-  },
-  {
-    date: "2024-01-21",
-    day: "Sunday",
-    bookings: [
-      {
-        id: "4",
-        starttime: "13:00",
-        endtime: "16:00",
-        customername: "ABC Corp",
-        package_name: "Corporate",
-        lane_no: 4,
-        book_status: "pending",
-      },
-      {
-        id: "5",
-        starttime: "17:00",
-        endtime: "18:00",
-        customername: "Emma Wilson",
-        package_name: "Economical",
-        lane_no: 1,
-        book_status: "confirmed",
-      },
-    ],
-  },
-  {
-    date: "2024-01-22",
-    day: "Monday",
-    bookings: [],
-  },
-  {
-    date: "2024-01-23",
-    day: "Tuesday",
-    bookings: [],
-  },
-  {
-    date: "2024-01-24",
-    day: "Wednesday",
-    bookings: [],
-  },
-  {
-    date: "2024-01-25",
-    day: "Thursday",
-    bookings: [
-      {
-        id: "6",
-        starttime: "15:00",
-        endtime: "17:00",
-        customername: "Birthday Party",
-        package_name: "Birthday",
-        lane_no: 5,
-        book_status: "confirmed",
-      },
-    ],
-  },
-  {
-    date: "2024-01-26",
-    day: "Friday",
-    bookings: [
-      {
-        id: "7",
-        starttime: "19:00",
-        endtime: "21:00",
-        customername: "Team Event",
-        package_name: "Corporate",
-        lane_no: 3,
-        book_status: "confirmed",
-      },
-      {
-        id: "8",
-        starttime: "14:00",
-        endtime: "15:00",
-        customername: "Lisa Brown",
-        package_name: "Economical",
-        lane_no: 2,
-        book_status: "confirmed",
-      },
-    ],
-  },
-]
+
 
 export function BusinessHoursTab() {
   const router = useRouter()
@@ -150,8 +107,7 @@ export function BusinessHoursTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [bookedSlots] = useState(sampleBookedSlots)
-  const [weeklyBookings, setWeeklyBookings] = useState<{ [date: string]: SlotBooking[] }>({})
+  const [weeklyBookings, setWeeklyBookings] = useState<SlotBooking[]>([])
   const [timelineLoading, setTimelineLoading] = useState(true)
   const [timelineError, setTimelineError] = useState<string | null>(null)
 
@@ -190,22 +146,17 @@ export function BusinessHoursTab() {
       setTimelineLoading(true)
       setTimelineError(null)
       try {
-        const today = dayjs()
-        const nextWeek = today.add(7, "days")
-        const startDate = today.format("YYYY-MM-DD")
-        const endDate = nextWeek.format("YYYY-MM-DD")
+        const bookingsResponse = await slotBookingApi.getAllBookings()
+        const bookings = bookingsResponse.data
 
-        // Fetch bookings for the week
-        // const bookings = await bookingsApi.getBookingsByDateRange(startDate, endDate);
-        const bookings = sampleBookedSlots // Replace with actual API call when available
+        const weekDates = getCurrentWeekDates()
 
-        // Group bookings by date
-        const groupedBookings: { [date: string]: SlotBooking[] } = {}
-        bookings.forEach((booking) => {
-          groupedBookings[booking.date] = booking.bookings as unknown as SlotBooking[]
-        })
+        const currentWeekBookings = bookings.filter(booking => {
+          const bookingDate = new Date(booking.date).toISOString().split("T")[0];
+          return weekDates.some(weekDay => weekDay.date === bookingDate);
+        });
 
-        setWeeklyBookings(groupedBookings)
+        setWeeklyBookings(currentWeekBookings)
       } catch (error) {
         const errorMessage = handleApiError(error)
         setTimelineError(errorMessage)
@@ -217,6 +168,25 @@ export function BusinessHoursTab() {
 
     fetchWeeklyBookings()
   }, [])
+
+  const getCurrentWeekDates = () => {
+    const today = new Date()
+    const currentDay = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1)) // Adjust to get Monday
+
+    const weekDates = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday)
+      date.setDate(monday.getDate() + i)
+      weekDates.push({
+        date: date.toISOString().split("T")[0],
+        dayName: date.toLocaleDateString("en-US", { weekday: "long" }),
+      })
+    }
+
+    return weekDates
+  }
 
   const handleSaveHours = async () => {
     try {
@@ -272,66 +242,7 @@ export function BusinessHoursTab() {
     return timeString.slice(0, 5) // Remove seconds part
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-500"
-      case "pending":
-        return "bg-yellow-500"
-      case "cancelled":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const getPackageColor = (packageType: string) => {
-    if (!packageType) return "bg-gray-500"
-    switch (packageType.toLowerCase()) {
-      case "birthday party":
-      case "birthday":
-        return "bg-pink-500"
-      case "economical":
-        return "bg-blue-500"
-      case "corporate":
-        return "bg-purple-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const timeToPosition = (time: string, startHour = 11, endHour = 22) => {
-    const [hours, minutes] = time.split(":").map(Number)
-    const totalMinutes = hours * 60 + minutes
-    const startMinutes = startHour * 60
-    const endMinutes = endHour * 60
-    const totalRange = endMinutes - startMinutes
-    return ((totalMinutes - startMinutes) / totalRange) * 100
-  }
-
-  const getBookingWidth = (startTime: string, endTime: string, startHour = 11, endHour = 22) => {
-    const startPos = timeToPosition(startTime, startHour, endHour)
-    const endPos = timeToPosition(endTime, startHour, endHour)
-    return endPos - startPos
-  }
-
-  const handleDayClick = (date: string) => {
-    router.push(`/admin/bookings?date=${date}`)
-  }
-
-  const generateTimeMarkers = (startHour = 11, endHour = 22) => {
-    const markers = []
-    for (let hour = startHour; hour <= endHour; hour++) {
-      const position = ((hour - startHour) / (endHour - startHour)) * 100
-      markers.push(
-        <div key={hour} className="absolute flex flex-col items-center" style={{ left: `${position}%` }}>
-          <div className="w-px h-4 bg-gray-300"></div>
-          <span className="text-xs text-gray-500 mt-1">{hour}:00</span>
-        </div>,
-      )
-    }
-    return markers
-  }
+  
 
   return (
     <div className="space-y-6">
@@ -346,10 +257,7 @@ export function BusinessHoursTab() {
               </CardTitle>
               <CardDescription>Visual timeline of bookings for the week</CardDescription>
             </div>
-            <Button onClick={() => router.push("/admin/bookings/new")} className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Add Booking</span>
-            </Button>
+            
           </div>
         </CardHeader>
         <CardContent>
@@ -361,141 +269,35 @@ export function BusinessHoursTab() {
           ) : timelineError ? (
             <div className="text-center py-8">
               <p className="text-red-600 mb-4">Error: {timelineError}</p>
-              {/* <Button onClick={fetchWeeklyBookings} variant="outline">
-                Try Again
-              </Button> */}
             </div>
           ) : (
-            <div className="space-y-6">
-              {Object.entries(weeklyBookings).map(([date, bookings]) => {
-                const day = dayjs(date)
-                const dayName = day.format("dddd")
-                const isTodayOrFuture = day.isSame(dayjs(), "day") || day.isAfter(dayjs(), "day")
-
-                if (!isTodayOrFuture) {
-                  return null // Skip past days
-                }
-
-                // Find business hours for the current day
-                const businessHour = businessHours.find((hour) => hour.day_name === dayName)
-                if (!businessHour) {
-                  return null // Skip if no business hours found for the day
-                }
-
-                const startHour = Number.parseInt(businessHour.startTime.split(":")[0])
-                const endHour = Number.parseInt(businessHour.endTime.split(":")[0])
-
-                const generateTimelineMarkers = () => {
-                  const markers = []
-                  for (let hour = startHour; hour <= endHour; hour++) {
-                    for (let minute = 0; minute < 60; minute += 30) {
-                      const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
-                      const position = timeToPosition(time, startHour, endHour)
-                      markers.push(
-                        <div
-                          key={`${date}-${time}`}
-                          className="absolute flex flex-col items-center"
-                          style={{ left: `${position}%` }}
-                        >
-                          {minute === 0 && <div className="w-px h-4 bg-gray-300"></div>}
-                          {minute === 0 && <span className="text-2xs text-gray-500 mt-1">{hour}:00</span>}
-                        </div>,
-                      )
-                    }
-                  }
-                  return markers
-                }
-
-                const renderBookingBlocks = () => {
-                  return bookings.map((booking) => {
-                    const startPos = timeToPosition(booking.starttime, startHour, endHour)
-                    const width = getBookingWidth(booking.starttime, booking.endtime, startHour, endHour)
-
-                    return (
-                      <div
-                        key={booking.id}
-                        className={`absolute top-1 h-10 rounded ${getPackageColor(
-                          booking.package_name || "",
-                        )} opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium shadow-sm`}
-                        style={{
-                          left: `${startPos}%`,
-                          width: `${width}%`,
-                          minWidth: "60px",
-                        }}
-                        title={`${booking.customername} - ${booking.package_name} (${booking.starttime}-${booking.endtime})`}
-                      >
-                        <span className="truncate px-1">{booking.customername.split(" ")[0]}</span>
-                      </div>
-                    )
-                  })
-                }
-
-                return (
-                  <div key={date} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <h4 className="font-semibold text-gray-900 w-20">{dayName}</h4>
-                        <span className="text-sm text-gray-500">{day.format("YYYY-MM-DD")}</span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                          {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleDayClick(date)} className="text-xs">
-                        View Details
-                      </Button>
-                    </div>
-
-                    <div
-                      className="relative h-12 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors border-2 border-transparent hover:border-primary/20"
-                      onClick={() => handleDayClick(date)}
-                    >
-                      {/* Time markers */}
-                      {generateTimelineMarkers()}
-
-                      {/* Business Hours Timeline */}
-                      {!businessHour.offDay && (
-                        <div
-                          className="absolute inset-y-0 bg-green-100 opacity-30"
-                          style={{
-                            left: `${timeToPosition(businessHour.startTime, startHour, endHour)}%`,
-                            width: `${getBookingWidth(businessHour.startTime, businessHour.endTime, startHour, endHour)}%`,
-                          }}
-                        ></div>
-                      )}
-
-                      {/* Booking blocks */}
-                      {renderBookingBlocks()}
-
-                      {/* Empty state */}
-                      {bookings.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                          No bookings - Click to add
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {/* Legend */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <h5 className="text-sm font-medium text-gray-700 mb-3">Package Types:</h5>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-pink-500 rounded"></div>
-                    <span className="text-sm text-gray-600">Birthday Party</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    <span className="text-sm text-gray-600">Economical</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                    <span className="text-sm text-gray-600">Corporate</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <>
+              <WeeklyStats bookings={weeklyBookings} />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Lane</TableHead>
+                    <TableHead>Package</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {weeklyBookings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(booking => (
+                    <TableRow key={booking._id}>
+                      <TableCell>{new Date(booking.date).toLocaleDateString(undefined, { timeZone: 'UTC' })}</TableCell>
+                      <TableCell>{booking.customerName}</TableCell>
+                      <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
+                      <TableCell>{booking.lane_no}</TableCell>
+                      <TableCell>{booking.package_id && typeof booking.package_id === 'object' ? (booking.package_id as any).Title : 'N/A'}</TableCell>
+                      <TableCell>{booking.book_status}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           )}
         </CardContent>
       </Card>
