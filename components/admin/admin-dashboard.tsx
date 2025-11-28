@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, Clock, Package, MessageSquare, Trophy } from "lucide-react"
+import { Calendar, Clock, Package, MessageSquare, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { BusinessHoursTab } from "./business-hours-tab"
 import { UpdatesTab } from "./updates-tab"
 import { LeaguesTab } from "./leagues-tab"
@@ -10,60 +12,26 @@ import { PackagesTab } from "./packages-tab"
 import { WeeklyTimeline } from "./weekly-timeline"
 import { AvailableSlots } from "./available-slots"
 
-// Mock data for booked slots timeline
-// const mockBookedSlots = [
-//   {
-//     id: "1",
-//     date: "2024-01-15",
-//     slots: [
-//       { time: "10:00", lane: 1, customer: "John Doe", status: "confirmed" },
-//       { time: "11:00", lane: 2, customer: "Jane Smith", status: "pending" },
-//       { time: "14:00", lane: 1, customer: "Bob Wilson", status: "confirmed" },
-//       { time: "16:00", lane: 3, customer: "Alice Brown", status: "confirmed" },
-//     ],
-//   },
-//   {
-//     id: "2",
-//     date: "2024-01-16",
-//     slots: [
-//       { time: "09:00", lane: 2, customer: "Mike Johnson", status: "confirmed" },
-//       { time: "13:00", lane: 1, customer: "Sarah Davis", status: "pending" },
-//       { time: "15:00", lane: 3, customer: "Tom Anderson", status: "confirmed" },
-//     ],
-//   },
-//   {
-//     id: "3",
-//     date: "2024-01-17",
-//     slots: [
-//       { time: '11:00", lane 1, customer: "Emma Wilson', status: "confirmed" },
-//       { time: "14:00", lane: 2, customer: "David Lee", status: "confirmed" },
-//     ],
-//   },
-// ]
-
 export function AdminDashboard() {
-  const [selectedDate, setSelectedDate] = useState<string>("2024-01-15")
+  const router = useRouter()
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-500"
-      case "pending":
-        return "bg-yellow-500"
-      case "cancelled":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken")
+    localStorage.removeItem("isAdminAuthenticated") // For cleanup of old auth
+    router.push("/signin")
   }
-
-  // const selectedDaySlots = mockBookedSlots.find((day) => day.date === selectedDate)?.slots || []
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage your bowling center operations</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Manage your bowling center operations</p>
+        </div>
+        <Button onClick={handleLogout} variant="outline" className="flex items-center space-x-2">
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
+        </Button>
       </div>
 
       <Tabs defaultValue="bookings" className="space-y-6">
@@ -84,10 +52,6 @@ export function AdminDashboard() {
             <MessageSquare className="w-4 h-4" />
             <span>Updates</span>
           </TabsTrigger>
-          {/* <TabsTrigger value="leagues" className="flex items-center space-x-2">
-            <Trophy className="w-4 h-4" />
-            <span>Leagues</span>
-          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="bookings" className="space-y-6">
@@ -105,10 +69,6 @@ export function AdminDashboard() {
         <TabsContent value="updates">
           <UpdatesTab />
         </TabsContent>
-
-        {/* <TabsContent value="leagues">
-          <LeaguesTab />
-        </TabsContent> */}
       </Tabs>
     </div>
   )

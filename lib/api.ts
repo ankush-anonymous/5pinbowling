@@ -11,6 +11,19 @@ const api = axios.create({
   },
 })
 
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("adminToken")
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
 // Business Hours API Types
 export interface BusinessHour {
   _id: string
@@ -368,11 +381,17 @@ export interface UpdateSlotBookingRequest {
   shoe_size?: string
 }
 
+export interface BookingsByDate {
+  date: string
+  bookings_details: SlotBooking[]
+}
+
 export interface SlotBookingsResponse {
-  currentPage: number
-  totalPages: number
-  totalBookings: number
-  data: SlotBooking[]
+  // Assuming these might still be there in the full response, otherwise remove
+  currentPage?: number
+  totalPages?: number
+  totalBookings?: number
+  data: BookingsByDate[]
 }
 
 // Slot Booking API Functions
@@ -428,6 +447,34 @@ export const slotBookingApi = {
     } catch (error) {
       console.error("Error deleting slot booking:", error)
       throw new Error("Failed to delete slot booking")
+    }
+  },
+}
+
+// Auth API Types
+export interface LoginRequest {
+  username: string
+  password?: string
+  token?: string
+}
+
+export interface LoginResponse {
+  token: string
+}
+
+// Auth API Functions
+export const authApi = {
+  // Login user
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    try {
+      const response = await api.post("/api/v1/user/login", data)
+      if (response.data.token) {
+        localStorage.setItem("adminToken", response.data.token)
+      }
+      return response.data
+    } catch (error) {
+      console.error("Error logging in:", error)
+      throw new Error("Failed to login")
     }
   },
 }

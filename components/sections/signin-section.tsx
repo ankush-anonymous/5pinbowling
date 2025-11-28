@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Lock, User, Eye, EyeOff } from "lucide-react"
+import { authApi, handleApiError } from "@/lib/api"
 
 export function SignInSection() {
   const router = useRouter()
@@ -31,18 +32,12 @@ export function SignInSection() {
     setIsLoading(true)
     setError("")
 
-    // Simple authentication check (in real app, this would be server-side)
-    if (formData.username === "admin" && formData.password === "bowling123") {
-      // Simulate API call delay
-      setTimeout(() => {
-        localStorage.setItem("isAdminAuthenticated", "true")
-        router.push("/admin")
-      }, 1000)
-    } else {
-      setTimeout(() => {
-        setError("Invalid username or password")
-        setIsLoading(false)
-      }, 1000)
+    try {
+      await authApi.login(formData)
+      router.push("/admin")
+    } catch (error) {
+      setError(handleApiError(error))
+      setIsLoading(false)
     }
   }
 
@@ -122,14 +117,6 @@ export function SignInSection() {
                   {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-500">
-                  Demo credentials: <br />
-                  Username: <strong>admin</strong> <br />
-                  Password: <strong>bowling123</strong>
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>

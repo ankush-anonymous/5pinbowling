@@ -58,7 +58,7 @@ export function TestimonialsSection() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <img src="/placeholder.svg?height=40&width=40" alt="Google" className="w-10 h-10" />
+            <img src="/google.png" alt="Google" className="w-10 h-10" />
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">Google Reviews</h2>
           </div>
           <div className="flex items-center justify-center space-x-2 mb-4">
@@ -107,7 +107,7 @@ export function TestimonialsSection() {
 
                   {/* Google Badge */}
                   <div className="flex items-center space-x-2 pt-2 border-t border-gray-100">
-                    <img src="/placeholder.svg?height=16&width=16" alt="Google" className="w-4 h-4" />
+                    <img src="/google.png" alt="Google" className="w-4 h-4" />
                     <span className="text-xs text-gray-500">Posted on Google</span>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export function TestimonialsSection() {
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-burgundy-700 transition-colors"
           >
-            <img src="/placeholder.svg?height=20&width=20" alt="Google" className="w-5 h-5" />
+            <img src="/google.png" alt="Google" className="w-5 h-5" />
             <span>Write a Google Review</span>
           </a>
         </div>

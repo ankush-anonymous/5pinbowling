@@ -64,22 +64,28 @@ export function UpdatesTab() {
     setUpdateForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null
-    setUpdateForm((prev) => ({ ...prev, image: file }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError(null)
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Publishing update:", updateForm)
-      setUpdateForm({ title: "", subtitle: "", body: "", image: null })
-      setIsSubmitting(false)
+    try {
+      await updatesApi.createUpdate(updateForm)
+      setUpdateForm({
+        title: "",
+        subtitle: "",
+        body: "",
+        image_url: "",
+        author: "Admin",
+        isArchived: false,
+      })
+      await fetchUpdates()
       alert("Update published successfully!")
-    }, 1000)
+    } catch (err) {
+      setError(handleApiError(err))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -142,24 +148,30 @@ export function UpdatesTab() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image" className="text-sm font-medium">
-                Featured Image
+              <Label htmlFor="image_url" className="text-sm font-medium">
+                Featured Image URL
               </Label>
-              <div className="flex items-center space-x-4">
-                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} className="flex-1" />
-                <Button type="button" variant="outline" className="flex items-center space-x-2 bg-transparent">
-                  <Upload className="w-4 h-4" />
-                  <span>Upload</span>
-                </Button>
-              </div>
-              {updateForm.image && <p className="text-sm text-gray-600">Selected: {updateForm.image.name}</p>}
+              <Input
+                id="image_url"
+                name="image_url"
+                value={updateForm.image_url}
+                onChange={handleInputChange}
+                placeholder="https://example.com/image.png"
+                className="h-12"
+              />
             </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setUpdateForm({ title: "", subtitle: "", body: "", image: null })}
+                onClick={() => setUpdateForm({ title: "", subtitle: "", body: "", image_url: "", author: "Admin", isArchived: false })}
               >
                 Clear
               </Button>

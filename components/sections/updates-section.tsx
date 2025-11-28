@@ -17,7 +17,8 @@ export function UpdatesSection() {
       try {
         setIsLoading(true)
         const response = await updatesApi.getAllUpdates()
-        setUpdates(response.data)
+        // Handle both direct array response and object with data property
+        setUpdates(response.data || response)
       } catch (err) {
         const errorMessage = handleApiError(err)
         setError(errorMessage)
@@ -83,7 +84,7 @@ export function UpdatesSection() {
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{new Date(update.dateOfCreation).toLocaleDateString()}</span>
+                            <span>{new Date(update.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <User className="w-4 h-4" />

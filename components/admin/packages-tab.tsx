@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +13,7 @@ import {
 } from "@/lib/api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { PackageDetailsModal } from "./package-details-modal"
 
 export function PackagesTab() {
   const [packages, setPackages] = useState<PackageType[]>([])
@@ -22,9 +21,10 @@ export function PackagesTab() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null)
 
   const [packageForm, setPackageForm] = useState<CreatePackageRequest>({
-    pageName: "",
     img_url: "",
     Title: "",
     subtitle: "",
@@ -67,7 +67,6 @@ export function PackagesTab() {
       await packagesApi.createPackage(packageForm)
       alert("Package created successfully!")
       setPackageForm({
-        pageName: "",
         img_url: "",
         Title: "",
         subtitle: "",
@@ -96,6 +95,16 @@ export function PackagesTab() {
     }
   }
 
+  const handleOpenModal = (pkg: PackageType) => {
+    setSelectedPackage(pkg)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedPackage(null)
+    setIsModalOpen(false)
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -116,17 +125,6 @@ export function PackagesTab() {
               </Alert>
             )}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="pageName">Page Name *</Label>
-                <Input
-                  id="pageName"
-                  name="pageName"
-                  value={packageForm.pageName}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Birthday Bash"
-                  required
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="img_url">Image URL *</Label>
                 <Input
@@ -241,7 +239,7 @@ export function PackagesTab() {
                       />
                     )}
                     <div className="absolute top-2 right-2 flex space-x-2">
-                      <Button variant="secondary" size="icon" className="rounded-full">
+                      <Button variant="secondary" size="icon" className="rounded-full" onClick={() => handleOpenModal(pkg)}>
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button variant="destructive" size="icon" className="rounded-full" onClick={() => handleDeletePackage(pkg._id)}>
@@ -262,6 +260,12 @@ export function PackagesTab() {
           )}
         </CardContent>
       </Card>
+      <PackageDetailsModal
+        pkg={selectedPackage}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onUpdate={fetchPackages}
+      />
     </div>
   )
 }

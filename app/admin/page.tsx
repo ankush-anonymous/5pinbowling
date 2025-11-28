@@ -11,8 +11,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const authStatus = localStorage.getItem("isAdminAuthenticated")
-      if (authStatus === "true") {
+      const token = localStorage.getItem("adminToken")
+      if (token) {
         setIsAuthenticated(true)
       } else {
         router.push("/signin")

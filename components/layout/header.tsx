@@ -1,12 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Menu, X, Phone } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Menu, X, Phone } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -22,22 +24,35 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-primary transition-colors">
+            <Link
+              href="/"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
               Home
             </Link>
-            <Link href="/packages" className="text-gray-700 hover:text-primary transition-colors">
+            <Link
+              href="/packages"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
               Bowling Packages
             </Link>
-            <Link href="#leagues" className="text-gray-700 hover:text-primary transition-colors">
-              Our Leagues
-            </Link>
-            <Link href="/updates" className="text-gray-700 hover:text-primary transition-colors">
+
+            <Link
+              href="/updates"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
               Updates
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
+            <Link
+              href="/contact"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
               Contact Us
             </Link>
-            <Link href="/signin" className="text-gray-700 hover:text-primary transition-colors">
+            <Link
+              href="/signin"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
               Sign In
             </Link>
           </nav>
@@ -48,12 +63,24 @@ export function Header() {
               <Phone className="w-4 h-4" />
               <span>(555) 123-BOWL</span>
             </div>
-            <Button className="bg-primary hover:bg-burgundy-700">Book Now</Button>
+            <Button
+              className="bg-primary hover:bg-burgundy-700"
+              onClick={() => router.push("/contact")}
+            >
+              Book Now
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <button
+            className="md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -61,22 +88,35 @@ export function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-4">
-              <Link href="/" className="text-gray-700 hover:text-primary transition-colors">
+              <Link
+                href="/"
+                className="text-gray-700 hover:text-primary transition-colors"
+              >
                 Home
               </Link>
-              <Link href="/packages" className="text-gray-700 hover:text-primary transition-colors">
+              <Link
+                href="/packages"
+                className="text-gray-700 hover:text-primary transition-colors"
+              >
                 Bowling Packages
               </Link>
-              <Link href="#leagues" className="text-gray-700 hover:text-primary transition-colors">
-                Our Leagues
-              </Link>
-              <Link href="/updates" className="text-gray-700 hover:text-primary transition-colors">
+
+              <Link
+                href="/updates"
+                className="text-gray-700 hover:text-primary transition-colors"
+              >
                 Updates
               </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
+              <Link
+                href="/contact"
+                className="text-gray-700 hover:text-primary transition-colors"
+              >
                 Contact Us
               </Link>
-              <Link href="/signin" className="text-gray-700 hover:text-primary transition-colors">
+              <Link
+                href="/signin"
+                className="text-gray-700 hover:text-primary transition-colors"
+              >
                 Sign In
               </Link>
               <div className="pt-4 border-t border-gray-200">
@@ -84,12 +124,17 @@ export function Header() {
                   <Phone className="w-4 h-4" />
                   <span>(555) 123-BOWL</span>
                 </div>
-                <Button className="w-full bg-primary hover:bg-burgundy-700">Book Now</Button>
+                <Button
+                  className="w-full bg-primary hover:bg-burgundy-700"
+                  onClick={() => router.push("/contact")}
+                >
+                  Book Now
+                </Button>
               </div>
             </nav>
           </div>
         )}
       </div>
     </header>
-  )
+  );
 }

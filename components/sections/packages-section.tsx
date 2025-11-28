@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +11,7 @@ import { packagesApi, type Package, handleApiError } from "@/lib/api"
 export function PackagesSection() {
   const [packages, setPackages] = useState<Package[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     fetchPackages()
@@ -100,7 +102,7 @@ export function PackagesSection() {
                       <div className="text-2xl font-bold text-primary">${pkg.cost}</div>
                       <div className="text-sm text-gray-500">for {pkg.no_of_person} people</div>
                     </div>
-                    <Button className="group-hover:bg-primary-dark transition-colors">
+                    <Button className="group-hover:bg-primary-dark transition-colors" onClick={() => router.push('/contact')}>
                       Book Now
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
