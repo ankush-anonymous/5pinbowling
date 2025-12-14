@@ -321,58 +321,67 @@ export function AvailableSlots() {
           <div className="space-y-2">
             {bookedSlotsForLane.map((booking) => (
               <Card key={booking._id}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <User className="w-5 h-5 text-gray-600" />
-                        <div>
-                          <p className="font-semibold text-sm">
-                            {booking.customerName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {booking.startTime} - {booking.endTime}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BookingDetailsModal
-                          booking={booking}
-                          onUpdate={fetchData}
-                        >
-                          <Button variant="outline" size="sm">View/Update</Button>
-                        </BookingDetailsModal>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">Delete</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this booking.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={async () => {
-                                  try {
-                                    await slotBookingApi.deleteBookingById(booking._id);
-                                    fetchData();
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
-                                }}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User className="w-5 h-5 text-gray-600" />
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {booking.customerName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {booking.startTime} - {booking.endTime}
+                        </p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center gap-2">
+                      <BookingDetailsModal
+                        booking={booking}
+                        onUpdate={fetchData}
+                      >
+                        <Button variant="outline" size="sm">
+                          View/Update
+                        </Button>
+                      </BookingDetailsModal>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete this booking.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={async () => {
+                                try {
+                                  await slotBookingApi.deleteBookingById(
+                                    booking._id
+                                  );
+                                  fetchData();
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
             {bookedSlotsForLane.length === 0 && (
               <p className="text-center text-gray-500 text-sm">
@@ -541,25 +550,36 @@ export function AvailableSlots() {
                                     booking={booking}
                                     onUpdate={fetchData}
                                   >
-                                    <Button variant="outline" size="sm">View/Update</Button>
+                                    <Button variant="outline" size="sm">
+                                      View/Update
+                                    </Button>
                                   </BookingDetailsModal>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="sm">Delete</Button>
+                                      <Button variant="destructive" size="sm">
+                                        Delete
+                                      </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogTitle>
+                                          Are you absolutely sure?
+                                        </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          This action cannot be undone. This will permanently delete this booking.
+                                          This action cannot be undone. This
+                                          will permanently delete this booking.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel>
+                                          Cancel
+                                        </AlertDialogCancel>
                                         <AlertDialogAction
                                           onClick={async () => {
                                             try {
-                                              await slotBookingApi.deleteBookingById(booking._id);
+                                              await slotBookingApi.deleteBookingById(
+                                                booking._id
+                                              );
                                               fetchData();
                                             } catch (err) {
                                               console.error(err);
@@ -577,7 +597,8 @@ export function AvailableSlots() {
                           ))}
                       </React.Fragment>
                     ))}
-                </TableBody>              </Table>
+                </TableBody>{" "}
+              </Table>
             </>
           )}
         </CardContent>
