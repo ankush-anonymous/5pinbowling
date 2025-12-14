@@ -11,17 +11,17 @@ export default function NewBookingPage() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const authStatus = localStorage.getItem("isAdminAuthenticated")
-      if (authStatus === "true") {
-        setIsAuthenticated(true)
+      const token = localStorage.getItem("adminToken");
+      if (token) {
+        setIsAuthenticated(true);
       } else {
-        router.push("/signin")
+        router.push("/signin");
       }
-      setIsLoading(false)
-    }
+      setIsLoading(false);
+    };
 
-    checkAuth()
-  }, [router])
+    checkAuth();
+  }, [router]);
 
   if (isLoading) {
     return (

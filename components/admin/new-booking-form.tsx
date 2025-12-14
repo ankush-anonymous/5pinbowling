@@ -69,6 +69,7 @@ export function NewBookingForm() {
     pizzaQuantity: "0",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
     if (formData.date) {
@@ -129,6 +130,13 @@ export function NewBookingForm() {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   setIsSubmitting(true)
+  setFormError(null); // Clear previous errors
+
+  if (!validateForm()) {
+    setFormError("Please fill in all required fields and ensure valid inputs.");
+    setIsSubmitting(false);
+    return;
+  }
 
   try {
     const bookingData: CreateSlotBookingRequest = {
@@ -154,12 +162,47 @@ const handleSubmit = async (e: React.FormEvent) => {
     router.push("/admin")
   } catch (error) {
     console.error("Failed to create booking:", handleApiError(error))
+    setFormError("Failed to create booking. " + handleApiError(error)); // Show API error message
     alert("Failed to create booking")
   } finally {
     setIsSubmitting(false)
   }
 }
 
+
+  const validateForm = () => {
+    const { customerName, email, phone, date, startTime, endTime, noOfPlayers, package_id, lane_no, pizzaQuantity } = formData;
+
+    // Basic required fields
+    if (!customerName || !email || !phone || !date || !startTime || !endTime || !noOfPlayers || !package_id || !lane_no) {
+      return false;
+    }
+
+    // Phone number length check
+    if (phone.length !== 10) {
+      return false;
+    }
+
+    // noOfPlayers must be a number >= 1
+    if (Number(noOfPlayers) < 1) {
+      return false;
+    }
+
+    // If pizzaQuantity > 0, then all pizzaTypes must be selected
+    if (Number(pizzaQuantity) > 0) {
+      if (pizzaTypes.length !== Number(pizzaQuantity) || pizzaTypes.some(type => !type)) {
+        return false;
+      }
+    }
+
+    // All shoeSizes must be selected if noOfPlayers > 0
+    // Note: noOfPlayers is tied to shoeSizes length, so just check if any are empty
+    if (Number(noOfPlayers) > 0 && shoeSizes.some(size => !size)) {
+      return false;
+    }
+
+    return true;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,11 +275,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(/\D/g, ""); // Remove non-digits
+                        const truncatedValue = numericValue.slice(0, 10); // Take only first 10 digits
+                        handleInputChange("phone", truncatedValue);
+                      }}
                       placeholder="9876543210"
+                      maxLength={10} // Enforce max length visually/natively
                       required
-                    />
-                  </div>
+                    />                  </div>
                 </div>
               </div>
 
@@ -510,12 +557,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                 />
               </div>
 
+              {formError && (
+                <div className="text-red-500 text-sm mt-2">{formError}</div>
+              )}
               {/* Submit Buttons */}
               <div className="flex justify-end space-x-4 pt-6 border-t">
                 <Button type="button" variant="outline" onClick={() => router.push("/admin")}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-burgundy-700">
+                <Button type="submit" disabled={isSubmitting || !validateForm()} className="bg-primary hover:bg-burgundy-700">
                   {isSubmitting ? (
                     "Creating..."
                   ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   slotBookingApi,
   businessHoursApi,
@@ -10,6 +10,17 @@ import {
   handleApiError,
 } from "@/lib/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   AlertCircle,
   Clock,
@@ -309,25 +320,59 @@ export function AvailableSlots() {
           </h3>
           <div className="space-y-2">
             {bookedSlotsForLane.map((booking) => (
-              <BookingDetailsModal
-                key={booking._id}
-                booking={booking}
-                onUpdate={fetchData}
-              >
-                <Card className="cursor-pointer hover:bg-gray-50">
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <User className="w-5 h-5 text-gray-600" />
-                    <div>
-                      <p className="font-semibold text-sm">
-                        {booking.customerName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {booking.startTime} - {booking.endTime}
-                      </p>
+              <Card key={booking._id}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <p className="font-semibold text-sm">
+                            {booking.customerName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {booking.startTime} - {booking.endTime}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BookingDetailsModal
+                          booking={booking}
+                          onUpdate={fetchData}
+                        >
+                          <Button variant="outline" size="sm">View/Update</Button>
+                        </BookingDetailsModal>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">Delete</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this booking.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={async () => {
+                                  try {
+                                    await slotBookingApi.deleteBookingById(booking._id);
+                                    fetchData();
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                }}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              </BookingDetailsModal>
             ))}
             {bookedSlotsForLane.length === 0 && (
               <p className="text-center text-gray-500 text-sm">
@@ -431,44 +476,108 @@ export function AvailableSlots() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Time</TableHead>
                     <TableHead>Lane</TableHead>
                     <TableHead>Package</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {weeklyBookings
+                  {Object.entries(
+                    weeklyBookings.reduce((acc, booking) => {
+                      const bookingDate = new Date(booking.date)
+                        .toISOString()
+                        .split("T")[0];
+                      if (!acc[bookingDate]) {
+                        acc[bookingDate] = [];
+                      }
+                      acc[bookingDate].push(booking);
+                      return acc;
+                    }, {} as Record<string, SlotBooking[]>)
+                  )
                     .sort(
-                      (a, b) =>
-                        new Date(a.date).getTime() - new Date(b.date).getTime()
+                      ([dateA], [dateB]) =>
+                        new Date(dateA).getTime() - new Date(dateB).getTime()
                     )
-                    .map((booking) => (
-                      <TableRow key={booking._id}>
-                        <TableCell>
-                          {new Date(booking.date).toLocaleDateString(
-                            undefined,
-                            { timeZone: "UTC" }
-                          )}
-                        </TableCell>
-                        <TableCell>{booking.customerName}</TableCell>
-                        <TableCell>
-                          {booking.startTime} - {booking.endTime}
-                        </TableCell>
-                        <TableCell>{booking.lane_no}</TableCell>
-                        <TableCell>
-                          {booking.package_id &&
-                          typeof booking.package_id === "object"
-                            ? (booking.package_id as any).Title
-                            : "N/A"}
-                        </TableCell>
-                        <TableCell>{booking.book_status}</TableCell>
-                      </TableRow>
+                    .map(([date, bookingsOnDate]) => (
+                      <React.Fragment key={date}>
+                        <TableRow key={date}>
+                          <TableCell
+                            colSpan={6}
+                            className="bg-muted font-medium"
+                          >
+                            {new Date(date).toLocaleDateString(undefined, {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              timeZone: "UTC",
+                            })}
+                          </TableCell>
+                        </TableRow>
+                        {bookingsOnDate
+                          .sort((a, b) =>
+                            a.startTime.localeCompare(b.startTime)
+                          )
+                          .map((booking) => (
+                            <TableRow key={booking._id}>
+                              <TableCell>{booking.customerName}</TableCell>
+                              <TableCell>
+                                {booking.startTime} - {booking.endTime}
+                              </TableCell>
+                              <TableCell>{booking.lane_no}</TableCell>
+                              <TableCell>
+                                {booking.package_id &&
+                                typeof booking.package_id === "object"
+                                  ? (booking.package_id as any).Title
+                                  : "N/A"}
+                              </TableCell>
+                              <TableCell>{booking.book_status}</TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <BookingDetailsModal
+                                    booking={booking}
+                                    onUpdate={fetchData}
+                                  >
+                                    <Button variant="outline" size="sm">View/Update</Button>
+                                  </BookingDetailsModal>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm">Delete</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete this booking.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={async () => {
+                                            try {
+                                              await slotBookingApi.deleteBookingById(booking._id);
+                                              fetchData();
+                                            } catch (err) {
+                                              console.error(err);
+                                            }
+                                          }}
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </React.Fragment>
                     ))}
-                </TableBody>
-              </Table>
+                </TableBody>              </Table>
             </>
           )}
         </CardContent>
