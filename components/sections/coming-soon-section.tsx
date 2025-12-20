@@ -11,7 +11,14 @@ export function ComingSoonSection() {
   }, [])
 
   return (
-    <section className="py-20 bg-gradient-to-r from-primary via-burgundy-800 to-primary relative overflow-hidden">
+    <section className="py-20 relative overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/main_banner2.jpeg')" }}
+      >
+        {/* Red overlay with less opacity */}
+        <div className="absolute inset-0 bg-red-800 bg-opacity-50"></div>
+      </div>
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>

@@ -9,13 +9,13 @@ export function HeroSection() {
 
   return (
     <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Video Background */}
+      {/* Image Background */}
       <div className="absolute inset-0 z-0">
-        <video autoPlay muted loop playsInline className="w-full h-full object-cover">
-          <source src="/placeholder-video.mp4" type="video/mp4" />
-          {/* Fallback background */}
-          <div className="w-full h-full bg-gradient-to-br from-primary to-burgundy-900"></div>
-        </video>
+        <img
+          src="/images/main_banner.jpeg"
+          alt="Bowling Alley Background"
+          className="w-full h-full object-cover"
+        />
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/50"></div>
       </div>

@@ -1,59 +1,69 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin } from "lucide-react"
-import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { businessHoursApi, type BusinessHour, handleApiError } from "@/lib/api"
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Phone,
+  Mail,
+  MapPin,
+} from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { businessHoursApi, type BusinessHour, handleApiError } from "@/lib/api";
 
 // Updated type to match API response
 interface ApiBusinessHour {
-  _id: string
-  day_no: number
-  day_name: string
-  startTime: string  // API uses startTime, not starttime
-  endTime: string    // API uses endTime, not endtime
-  offDay: boolean    // API uses offDay, not offday
-  createdAt: string
-  updatedAt: string
-  __v: number
+  _id: string;
+  day_no: number;
+  day_name: string;
+  startTime: string; // API uses startTime, not starttime
+  endTime: string; // API uses endTime, not endtime
+  offDay: boolean; // API uses offDay, not offday
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 const Footer = () => {
-  const [businessHours, setBusinessHours] = useState<ApiBusinessHour[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const footerRef = useRef<HTMLElement>(null)
-  const hoursRef = useRef<HTMLDivElement>(null)
+  const [businessHours, setBusinessHours] = useState<ApiBusinessHour[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const footerRef = useRef<HTMLElement>(null);
+  const hoursRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      gsap.registerPlugin(ScrollTrigger)
+      gsap.registerPlugin(ScrollTrigger);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     const fetchBusinessHours = async () => {
       try {
-        setIsLoading(true)
-        const response = await businessHoursApi.getAllBusinessHours()
+        setIsLoading(true);
+        const response = await businessHoursApi.getAllBusinessHours();
         // Handle the data property from API response
-        const hours = response.data || response
+        const hours = response.data || response;
         // Sort by day_no to ensure correct order
-        const sortedHours = hours.sort((a: ApiBusinessHour, b: ApiBusinessHour) => a.day_no - b.day_no)
-        setBusinessHours(sortedHours)
+        const sortedHours = hours.sort(
+          (a: ApiBusinessHour, b: ApiBusinessHour) => a.day_no - b.day_no
+        );
+        setBusinessHours(sortedHours);
       } catch (err) {
-        const errorMessage = handleApiError(err)
-        setError(errorMessage)
-        console.error("Failed to fetch business hours:", errorMessage)
+        const errorMessage = handleApiError(err);
+        setError(errorMessage);
+        console.error("Failed to fetch business hours:", errorMessage);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchBusinessHours()
-  }, [])
+    fetchBusinessHours();
+  }, []);
 
   useEffect(() => {
     if (footerRef.current && hoursRef.current) {
@@ -70,42 +80,48 @@ const Footer = () => {
             start: "top 90%",
             toggleActions: "play none none reverse",
           },
-        },
-      )
+        }
+      );
     }
-  }, [])
+  }, []);
 
   // Updated component to use correct property names
   function HoursBar({ day_name, startTime, endTime, offDay }: ApiBusinessHour) {
-    const barRef = useRef<HTMLDivElement>(null)
+    const barRef = useRef<HTMLDivElement>(null);
 
     // Convert time format from "HH:MM:SS" to hour number
     const timeToHour = (timeString: string) => {
-      const [hours] = timeString.split(":").map(Number)
-      return hours
-    }
+      const [hours] = timeString.split(":").map(Number);
+      return hours;
+    };
 
-    const startHour = offDay ? 0 : timeToHour(startTime)
-    const endHour = offDay ? 0 : timeToHour(endTime)
+    const startHour = offDay ? 0 : timeToHour(startTime);
+    const endHour = offDay ? 0 : timeToHour(endTime);
 
     // Calculate percentage based on 11AM (11) to 8PM (20) scale for better visualization
-    const scaleStart = 11
-    const scaleEnd = 20
-    const totalHours = scaleEnd - scaleStart
+    const scaleStart = 11;
+    const scaleEnd = 20;
+    const totalHours = scaleEnd - scaleStart;
 
-    const startPercent = offDay ? 0 : Math.max(0, ((startHour - scaleStart) / totalHours) * 100)
-    const widthPercent = offDay ? 0 : Math.min(100, ((endHour - startHour) / totalHours) * 100)
+    const startPercent = offDay
+      ? 0
+      : Math.max(0, ((startHour - scaleStart) / totalHours) * 100);
+    const widthPercent = offDay
+      ? 0
+      : Math.min(100, ((endHour - startHour) / totalHours) * 100);
 
     // Format display time
     const formatTime = (timeString: string) => {
-      const [hours, minutes] = timeString.split(":")
-      const hour = Number.parseInt(hours)
-      const ampm = hour >= 12 ? "PM" : "AM"
-      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
-      return `${displayHour}:${minutes} ${ampm}`
-    }
+      const [hours, minutes] = timeString.split(":");
+      const hour = Number.parseInt(hours);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
 
-    const displayHours = offDay ? "CLOSED" : `${formatTime(startTime)} - ${formatTime(endTime)}`
+    const displayHours = offDay
+      ? "CLOSED"
+      : `${formatTime(startTime)} - ${formatTime(endTime)}`;
 
     useEffect(() => {
       if (barRef.current && !offDay) {
@@ -122,10 +138,10 @@ const Footer = () => {
               start: "top 90%",
               toggleActions: "play none none reverse",
             },
-          },
-        )
+          }
+        );
       }
-    }, [offDay])
+    }, [offDay]);
 
     return (
       <div className="flex items-center justify-between py-3 group hover:bg-white/5 rounded-lg px-2 lg:px-4 transition-all duration-300">
@@ -148,7 +164,9 @@ const Footer = () => {
             )}
             {offDay && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-gray-400 text-xs font-medium">CLOSED</span>
+                <span className="text-gray-400 text-xs font-medium">
+                  CLOSED
+                </span>
               </div>
             )}
           </div>
@@ -160,9 +178,11 @@ const Footer = () => {
           </div>
         </div>
 
-        <span className="text-gray-300 text-xs lg:text-sm w-24 lg:w-40 text-right">{displayHours}</span>
+        <span className="text-gray-300 text-xs lg:text-sm w-24 lg:w-40 text-right">
+          {displayHours}
+        </span>
       </div>
-    )
+    );
   }
 
   return (
@@ -182,7 +202,9 @@ const Footer = () => {
         <div ref={hoursRef} className="mb-16">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold mb-4">Business Hours</h3>
-            <p className="text-gray-300">Visit us during these times for the best 5-pin bowling experience</p>
+            <p className="text-gray-300">
+              Visit us during these times for the best 5-pin bowling experience
+            </p>
           </div>
 
           <div className="max-w-4xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-gray-700/50">
@@ -193,7 +215,9 @@ const Footer = () => {
               </div>
             ) : error ? (
               <div className="text-center py-8">
-                <p className="text-red-400 mb-4">Error loading business hours: {error}</p>
+                <p className="text-red-400 mb-4">
+                  Error loading business hours: {error}
+                </p>
                 <button
                   onClick={() => window.location.reload()}
                   className="text-primary hover:text-burgundy-200 underline"
@@ -214,9 +238,12 @@ const Footer = () => {
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 lg:p-6">
                 <h4 className="text-primary font-bold text-lg mb-3">NOTE</h4>
                 <p className="text-gray-200 text-sm lg:text-base leading-relaxed">
-                  <strong>SPECIAL ARRANGEMENTS</strong> for groups at times outside of the published hours can be made
-                  by pre-booking <strong>RESERVATIONS</strong>. Please call ahead during business hours OR complete the
-                  above <strong>RESERVATION FORM</strong> to make those arrangements with the bowling centre.
+                  <strong>SPECIAL ARRANGEMENTS</strong> for groups at times
+                  outside of the published hours can be made by pre-booking{" "}
+                  <strong>RESERVATIONS</strong>. Please call ahead during
+                  business hours OR complete the above{" "}
+                  <strong>RESERVATION FORM</strong> to make those arrangements
+                  with the bowling centre.
                 </p>
               </div>
             </div>
@@ -292,8 +319,8 @@ const Footer = () => {
               <span className="text-2xl font-bold">5pinbowlin</span>
             </div>
             <p className="text-gray-300 leading-relaxed mb-6 text-sm lg:text-base">
-              Your premier Canadian 5-pin bowling destination. Creating memorable experiences and bringing families
-              together since 2008.
+              Your premier Canadian 5-pin bowling destination. Creating
+              memorable experiences and bringing families together since 2008.
             </p>
 
             <div>
@@ -323,16 +350,26 @@ const Footer = () => {
         <div className="border-t border-gray-700 pt-8 mt-12">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-400 text-center md:text-left text-sm">
-              &copy; {new Date().getFullYear()} 5pinbowlin. All rights reserved. | Proudly Canadian 🇨🇦
+              &copy; {new Date().getFullYear()} 5pinbowlin. All rights reserved.
+              | Proudly Canadian 🇨🇦
             </p>
             <div className="flex space-x-6 text-sm">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Privacy Policy
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Terms of Service
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Accessibility
               </Link>
             </div>
@@ -340,7 +377,7 @@ const Footer = () => {
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export { Footer }
+export { Footer };

@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger)
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 export function MapsSection() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const mapRef = useRef<HTMLDivElement>(null)
-  const infoRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (sectionRef.current && mapRef.current && infoRef.current) {
@@ -22,31 +22,41 @@ export function MapsSection() {
           end: "bottom 20%",
           toggleActions: "play none none reverse",
         },
-      })
+      });
 
       tl.fromTo(
         infoRef.current,
         { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" }
+      ).fromTo(
+        mapRef.current,
+        { x: 50, opacity: 0 },
         { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" },
-      ).fromTo(mapRef.current, { x: 50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, "-=0.4")
+        "-=0.4"
+      );
     }
-  }, [])
+  }, []);
 
   return (
     <section ref={sectionRef} className="py-20 bg-white overflow-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Find Us</h2>
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            Find Us
+          </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Located in the heart of the city, easy to find and plenty of parking available
+            Located in the heart of the city, easy to find and plenty of parking
+            available
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* Location Info */}
-          <div ref={infoRef} className="w-full">
-            <div className="bg-gradient-to-br from-primary/5 to-burgundy-50 p-6 lg:p-8 rounded-2xl">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Visit 5pinbowlin</h3>
+          <div ref={infoRef} className="w-full grid md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+            <div className="bg-gradient-to-br from-primary/5 to-burgundy-50 p-6 lg:p-8 rounded-2xl h-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Visit 5pinbowlin
+              </h3>
 
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
@@ -54,7 +64,9 @@ export function MapsSection() {
                     <span className="text-2xl">📍</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Address
+                    </h4>
                     <p className="text-gray-600 text-sm lg:text-base">
                       123 Bowling Lane
                       <br />
@@ -70,7 +82,9 @@ export function MapsSection() {
                     <span className="text-2xl">🚗</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Parking</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Parking
+                    </h4>
                     <p className="text-gray-600 text-sm lg:text-base">
                       Free parking available
                       <br />
@@ -86,7 +100,9 @@ export function MapsSection() {
                     <span className="text-2xl">🚌</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Public Transit</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Public Transit
+                    </h4>
                     <p className="text-gray-600 text-sm lg:text-base">
                       TTC Bus Route 123
                       <br />
@@ -97,6 +113,14 @@ export function MapsSection() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden shadow-lg h-full min-h-[300px]">
+              <img 
+                src="/images/map_image.jpeg" 
+                alt="Bowling Alley Interior" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
 
@@ -117,12 +141,19 @@ export function MapsSection() {
 
               {/* Overlay with business info */}
               <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-3 lg:p-4 rounded-lg shadow-lg max-w-[200px]">
-                <h4 className="font-bold text-primary text-base lg:text-lg">5pinbowlin</h4>
-                <p className="text-xs lg:text-sm text-gray-600">Canadian 5-Pin Bowling</p>
+                <h4 className="font-bold text-primary text-base lg:text-lg">
+                  5pinbowlin
+                </h4>
+                <p className="text-xs lg:text-sm text-gray-600">
+                  Canadian 5-Pin Bowling
+                </p>
                 <div className="flex items-center mt-2">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xs lg:text-sm">
+                      <span
+                        key={i}
+                        className="text-yellow-400 text-xs lg:text-sm"
+                      >
                         ★
                       </span>
                     ))}
@@ -135,5 +166,5 @@ export function MapsSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
